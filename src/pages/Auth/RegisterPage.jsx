@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2"; // Import SweetAlert
+import AuthService from "@services/AuthService";
 import HappyBunch from "@assets/Auth/HappyBunch.png";
 import { Eye, EyeOff, ArrowLeft, Mail, Phone, Lock, User } from "lucide-react";
 
 export default function RegisterPage() {
-  // Validation schema using Yup
+  const navigate = useNavigate();
+
+  // Validation schema (remains the same as in the original code)
   const validationSchema = Yup.object().shape({
     name: Yup.string()
       .required("Nama wajib diisi")
@@ -13,30 +18,30 @@ export default function RegisterPage() {
     email: Yup.string()
       .email("Format email tidak valid")
       .required("Email wajib diisi"),
-    phoneNumber: Yup.string()
+    no_telp: Yup.string()
       .matches(/^[0-9]+$/, "Nomor handphone harus berupa angka")
       .min(10, "Nomor handphone minimal 10 digit")
       .max(15, "Nomor handphone maksimal 15 digit")
       .required("Nomor handphone wajib diisi"),
     password: Yup.string()
       .required("Password wajib diisi")
-      .min(8, "Password minimal 8 karakter")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-        "Password harus mengandung huruf besar, huruf kecil, angka, dan karakter spesial"
-      ),
+      .min(8, "Password minimal 8 karakter"),
+    // .matches(
+    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    //   "Password harus mengandung huruf besar, huruf kecil, angka, dan karakter spesial"
+    // ),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password"), null], "Konfirmasi password tidak cocok")
       .required("Konfirmasi password wajib diisi"),
   });
 
-  // State for password visibility
+  // State for password visibility (remains the same)
   const [showPassword, setShowPassword] = useState({
     password: false,
     confirmPassword: false,
   });
 
-  // Toggle password visibility
+  // Toggle password visibility (remains the same)
   const togglePasswordVisibility = (field) => {
     setShowPassword((prev) => ({
       ...prev,
@@ -45,14 +50,74 @@ export default function RegisterPage() {
   };
 
   // Handle form submission
-  const handleSubmit = (values, { setSubmitting }) => {
-    // Remove confirmPassword before sending to backend
-    const { confirmPassword, ...submitValues } = values;
+  const handleSubmit = async (values, { setSubmitting, setErrors }) => {
+    try {
+      // Remove confirmPassword before sending to backend
+      const { confirmPassword, ...submitValues } = values;
 
-    // TODO: Implement your registration logic here
-    console.log(submitValues);
+      // Show loading indicator
+      Swal.fire({
+        title: "Sedang Mendaftar...",
+        text: "Mohon tunggu sebentar",
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
 
-    setSubmitting(false);
+      // Call AuthService register method
+      const registeredUser = await AuthService.register(submitValues);
+
+      // Close loading indicator
+      Swal.close();
+
+      // Show success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Registrasi Berhasil!",
+        text: "Silakan verifikasi OTP untuk melanjutkan.",
+        confirmButtonText: "OK",
+      });
+
+      // Store email in global state before navigating
+      useAuthStore.getState().setEmail(submitValues.email);
+
+      // Navigate to OTP verification page
+      navigate("/verify-otp", {
+        state: {
+          email: submitValues.email,
+          no_telp: submitValues.no_telp,
+        },
+      });
+    } catch (error) {
+      // Close loading indicator
+      Swal.close();
+
+      // Handle registration errors
+      if (error.response && error.response.data) {
+        // If the backend returns specific field errors
+        const backendErrors = error.response.data.errors;
+        if (backendErrors) {
+          setErrors(backendErrors);
+        }
+
+        // Show error alert
+        Swal.fire({
+          icon: "error",
+          title: "Registrasi Gagal",
+          text:
+            error.response.data.message || "Terjadi kesalahan saat mendaftar",
+        });
+      } else {
+        // Network or unexpected error
+        Swal.fire({
+          icon: "error",
+          title: "Kesalahan",
+          text: "Terjadi kesalahan. Silakan coba lagi.",
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,7 +149,7 @@ export default function RegisterPage() {
             initialValues={{
               name: "",
               email: "",
-              phoneNumber: "",
+              no_telp: "",
               password: "",
               confirmPassword: "",
             }}
@@ -173,7 +238,7 @@ export default function RegisterPage() {
                   {/* No HandPhone Input */}
                   <div className="space-y-2">
                     <label
-                      htmlFor="phoneNumber"
+                      htmlFor="no_telp"
                       className="block text-sm font-medium text-gray-700"
                     >
                       No HandPhone
@@ -184,11 +249,11 @@ export default function RegisterPage() {
                       </div>
                       <Field
                         type="tel"
-                        name="phoneNumber"
+                        name="no_telp"
                         className={`
                           pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            errors.phoneNumber && touched.phoneNumber
+                            errors.no_telp && touched.no_telp
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
@@ -197,7 +262,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     <ErrorMessage
-                      name="phoneNumber"
+                      name="no_telp"
                       component="div"
                       className="text-red-500 text-sm mt-1 "
                     />

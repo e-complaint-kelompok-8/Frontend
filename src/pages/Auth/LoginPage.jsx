@@ -3,6 +3,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom"; // Assuming React Router
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import Swal from "sweetalert2"; // Import SweetAlert2
 import HappyBunch from "@assets/Auth/HappyBunch.png";
 import AuthService from "@services/AuthService"; // Adjust path as needed
 
@@ -16,7 +17,6 @@ export default function LoginPage() {
       .email("Format email tidak valid")
       .required("Email wajib diisi"),
     password: Yup.string().required("Password wajib diisi"),
-    // .min(8, "Password minimal 8 karakter"),
   });
 
   // State for password visibility
@@ -30,8 +30,21 @@ export default function LoginPage() {
   // Handle form submission
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
+      // Show loading indicator
+      Swal.fire({
+        title: "Sedang Masuk...",
+        text: "Mohon tunggu sebentar",
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+      });
+
       setLoginError(null);
       const userData = await AuthService.login(values);
+
+      // Close loading indicator
+      Swal.close();
 
       // Redirect based on user role
       switch (userData.role) {
@@ -45,11 +58,22 @@ export default function LoginPage() {
           navigate("/dashboard");
       }
     } catch (error) {
+      // Close loading indicator
+      Swal.close();
+
       // Handle login errors
-      setLoginError(
-        error.response?.data?.message || "Login gagal. Silakan coba lagi."
-      );
+      const errorMessage =
+        error.response?.data?.message || "Login gagal. Silakan coba lagi.";
+
+      setLoginError(errorMessage);
       setSubmitting(false);
+
+      // Show error alert
+      Swal.fire({
+        icon: "error",
+        title: "Login Gagal",
+        text: errorMessage,
+      });
     }
   };
 
@@ -100,13 +124,6 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                {/* Display login error */}
-                {loginError && (
-                  <div className="text-center text-red-500 text-sm">
-                    {loginError}
-                  </div>
-                )}
-
                 <div className="space-y-4">
                   {/* Email Input */}
                   <div className="space-y-2">
@@ -126,7 +143,7 @@ export default function LoginPage() {
                         className={`
                           pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            errors.email && touched.email
+                            (errors.email && touched.email) || loginError
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
@@ -134,6 +151,7 @@ export default function LoginPage() {
                         placeholder="Masukkan email Anda"
                       />
                     </div>
+                    {/* Email Error Message */}
                     <ErrorMessage
                       name="email"
                       component="div"
@@ -159,7 +177,7 @@ export default function LoginPage() {
                         className={`
                           pl-10 pr-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            errors.password && touched.password
+                            (errors.password && touched.password) || loginError
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
@@ -178,11 +196,19 @@ export default function LoginPage() {
                         )}
                       </button>
                     </div>
+                    {/* Password Error Message */}
                     <ErrorMessage
                       name="password"
                       component="div"
                       className="text-red-500 text-sm mt-1"
                     />
+
+                    {/* Global Login Error Message */}
+                    {loginError && (
+                      <div className="text-red-500 text-sm mt-1">
+                        {loginError}
+                      </div>
+                    )}
                   </div>
 
                   {/* Login Button */}
