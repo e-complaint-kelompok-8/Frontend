@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
-import AdminDashboard from "../components/Admin/AdminDashboard";
+import ProtectedRoute from "@routes/ProtectedRoute";
+import AdminDashboard from "@pages/Admin/AdminDashboard";
 
 const AdminRoutes = () => {
   return (
