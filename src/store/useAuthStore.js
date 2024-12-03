@@ -1,21 +1,29 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
+import { jwtDecode } from "jwt-decode";
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
-      role: null,
-      user: null,
       email: null,
       setToken: (token) => set({ token }),
-      setRole: (role) => set({ role }),
-      setUser: (user) => set({ user }),
-      setEmail: (email) => set({ email }), // New method to set email
-      clearEmail: () => set({ email: null }), // New method to clear email
-      clearAuth: () =>
-        set({ token: null, role: null, user: null, email: null }), // Updated to clear email as well
+      setEmail: (email) => set({ email }),
+      clearAuth: () => set({ token: null }),
+      getUserIdFromToken: () => {
+        const token = get().token;
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            return decoded.user_id; // Pastikan `user_id` sesuai dengan nama properti di payload JWT Anda
+          } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
+          }
+        }
+        return null;
+      },
     }),
+
     {
       name: "auth-storage",
     }

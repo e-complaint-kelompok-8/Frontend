@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminRoutes from "@routes/AdminRoutes";
 import UserRoutes from "@routes/UserRoutes";
 // import HomePage from "@pages/HomePage";
-import LoginPage from "@pages/Auth/LoginPage";
-import RegisterPage from "@pages/Auth/RegisterPage";
-import OTPVerificationPage from "@pages/Auth/OTPVerificationPage";
+import LoginPage from "@pages/Auth/User/LoginPage";
+import RegisterPage from "@pages/Auth/User/RegisterPage";
+import OTPVerificationPage from "@pages/Auth/User/OTPVerificationPage";
 // import NotFound from "@components/Shared/NotFound";
 
 function App() {

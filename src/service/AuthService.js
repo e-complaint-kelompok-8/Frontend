@@ -36,12 +36,8 @@ class AuthService {
       const { token, role } = response.data.user;
 
       // Update global state dengan Zustand
+      
       useAuthStore.getState().setToken(token);
-      useAuthStore.getState().setRole(role);
-      useAuthStore.getState().setUser(response.data.user);
-
-      //   // Simpan data user di localStorage
-      //   localStorage.setItem("userData", JSON.stringify(response.data.user));
 
       return response.data.user;
     } catch (error) {

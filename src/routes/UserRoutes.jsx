@@ -7,7 +7,7 @@ import LandingPage from "@pages/User/LandingPage";
 
 const UserRoutes = () => {
   return (
-    <ProtectedRoute role="user">
+    <ProtectedRoute >
       <Routes>
         <Route path="/dashboard" element={<LandingPage />} />
       </Routes>

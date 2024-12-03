@@ -6,6 +6,7 @@ import Swal from "sweetalert2"; // Import SweetAlert
 import AuthService from "@services/AuthService";
 import HappyBunch from "@assets/Auth/HappyBunch.png";
 import { Eye, EyeOff, ArrowLeft, Mail, Phone, Lock, User } from "lucide-react";
+import useAuthStore from "@stores/useAuthStore";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -124,7 +125,10 @@ export default function RegisterPage() {
     <div className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-[#4338CA] to-[#6366F1] overflow-hidden">
       {/* Left Section - Mobile Optimized */}
       <div className="lg:w-1/2 bg-transparent p-4 lg:p-8 flex flex-col relative lg:fixed lg:h-screen">
-        <button className="text-white hover:opacity-80 mb-4 flex items-center space-x-2">
+        <button
+          className="text-white hover:opacity-80 mb-4 flex items-center space-x-2"
+          onClick={() => navigate(-1)}
+        >
           <ArrowLeft className="h-6 w-6" />
           <span className="text-sm">Kembali</span>
         </button>
@@ -143,7 +147,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Section - Mobile Optimized */}
-      <div className="lg:ml-auto lg:w-1/2 p-4 lg:p-8 flex flex-col justify-center overflow-y-auto bg-white/90 backdrop-blur-sm lg:bg-white/80 rounded-t-3xl lg:rounded-none shadow-2xl">
+      <div className="lg:ml-auto lg:w-1/2 p-4 lg:p-8 flex flex-col justify-center overflow-y-auto bg-white/90 backdrop-blur-sm lg:bg-white/80 rounded-t-3xl lg:rounded-l-3xl lg:rounded-bl-3xl  lg:rounded-tr-none shadow-2xl">
         <div className="w-full max-w-md mx-auto space-y-6">
           <Formik
             initialValues={{
