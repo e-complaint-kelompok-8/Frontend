@@ -1,23 +1,26 @@
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom"; // Assuming React Router
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import Swal from "sweetalert2"; // Import SweetAlert2
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2"; // Import SweetAlert
+import AuthService from "@services/AuthService";
 import HappyBunch from "@assets/Auth/HappyBunch.png";
-import AuthService from "@services/AuthService"; // Adjust path as needed
-import useAuthStore from "@stores/useAuthStore";
+import { Eye, EyeOff, ArrowLeft, Mail, Lock } from "lucide-react";
 
-export default function LoginPageAdmin() {
+export default function RegisterPageAdmin() {
   const navigate = useNavigate();
-  const [loginError, setLoginError] = useState(null);
 
-  // Validation schema using Yup
+  // Updated Validation Schema
   const validationSchema = Yup.object().shape({
     email: Yup.string()
       .email("Format email tidak valid")
       .required("Email wajib diisi"),
-    password: Yup.string().required("Password wajib diisi"),
+    password: Yup.string()
+      .required("Password wajib diisi")
+      .min(8, "Password minimal 8 karakter"),
+    role: Yup.string()
+      .oneOf(["admin", "superadmin"], "Pilih role yang valid")
+      .required("Role wajib dipilih"),
   });
 
   // State for password visibility
@@ -29,54 +32,51 @@ export default function LoginPageAdmin() {
   };
 
   // Handle form submission
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
       // Show loading indicator
       Swal.fire({
-        title: "Sedang Masuk...",
+        title: "Sedang Mendaftar...",
         text: "Mohon tunggu sebentar",
         didOpen: () => {
           Swal.showLoading();
         },
-        allowOutsideClick: false,
       });
 
-      setLoginError(null);
-      const adminData = await AuthService.loginAdmin(values);
-
-      // // Save token to global state
-      const { setToken } = useAuthStore.getState();
-      setToken(adminData.token);
-
-      // Get role from token
-      const role = useAuthStore.getState().getRoleFromToken();
+      // Call AuthService register method
+      const registeredUser = await AuthService.registerAdmin(values);
 
       // Close loading indicator
       Swal.close();
 
-      // Redirect based on user role
-      if (role === "admin" || role === "superadmin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      // Show success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Registrasi Berhasil!",
+        text: "Akun admin berhasil dibuat.",
+        confirmButtonText: "OK",
+      });
+
+      // Navigate to login page or dashboard
+      navigate("/admin-login");
     } catch (error) {
       // Close loading indicator
       Swal.close();
 
-      // Handle login errors
-      const errorMessage =
-        error.response?.data?.message || "Login gagal. Silakan coba lagi.";
-
-      setLoginError(errorMessage);
-      setSubmitting(false);
+      // Handle registration errors
+      if (error.errors) {
+        // If the backend returns specific field errors
+        setErrors(error.errors);
+      }
 
       // Show error alert
       Swal.fire({
         icon: "error",
-        title: "Login Gagal",
-        text: errorMessage,
+        title: "Registrasi Gagal",
+        text: error.message || "Terjadi kesalahan saat mendaftar",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -85,8 +85,8 @@ export default function LoginPageAdmin() {
       {/* Left Section - Mobile Optimized */}
       <div className="lg:w-1/2 bg-transparent p-4 lg:p-8 flex flex-col relative lg:fixed lg:h-screen">
         <button
-          onClick={() => navigate(-1)}
           className="text-white hover:opacity-80 mb-4 flex items-center space-x-2"
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-6 w-6" />
           <span className="text-sm">Kembali</span>
@@ -96,7 +96,7 @@ export default function LoginPageAdmin() {
           {/* Animated Shadow Circle */}
           <div className="absolute -bottom-0 w-3/4 sm:w-1/2 h-1/4 bg-white opacity-20 rounded-full blur-3xl "></div>
 
-          {/* Image with Animation */}
+          {/* Gambar dengan Animasi */}
           <img
             src={HappyBunch}
             alt="Person at desk illustration"
@@ -112,6 +112,7 @@ export default function LoginPageAdmin() {
             initialValues={{
               email: "",
               password: "",
+              role: "",
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
@@ -120,10 +121,10 @@ export default function LoginPageAdmin() {
               <Form className="space-y-6">
                 <div className="space-y-4 text-center">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                    Selamat Datang di Laporin!
+                    Registrasi Admin Baru
                   </h1>
                   <p className="text-sm md:text-base text-gray-600">
-                    Masuk untuk mulai menyampaikan keluhan Anda dengan mudah
+                    Buat akun admin untuk mengakses sistem Laporin
                   </p>
                 </div>
 
@@ -146,15 +147,14 @@ export default function LoginPageAdmin() {
                         className={`
                           pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            (errors.email && touched.email) || loginError
+                            errors.email && touched.email
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
                         `}
-                        placeholder="Masukkan email Anda"
+                        placeholder="Masukkan email admin"
                       />
                     </div>
-                    {/* Email Error Message */}
                     <ErrorMessage
                       name="email"
                       component="div"
@@ -180,7 +180,7 @@ export default function LoginPageAdmin() {
                         className={`
                           pl-10 pr-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            (errors.password && touched.password) || loginError
+                            errors.password && touched.password
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
@@ -199,22 +199,45 @@ export default function LoginPageAdmin() {
                         )}
                       </button>
                     </div>
-                    {/* Password Error Message */}
                     <ErrorMessage
                       name="password"
                       component="div"
                       className="text-red-500 text-sm mt-1"
                     />
-
-                    {/* Global Login Error Message */}
-                    {loginError && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {loginError}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Login Button */}
+                  {/* Role Select */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="role"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Role
+                    </label>
+                    <Field
+                      as="select"
+                      name="role"
+                      className={`
+                        w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
+                        ${
+                          errors.role && touched.role
+                            ? "border-red-500 focus:ring-red-500 bg-red-50"
+                            : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
+                        }
+                      `}
+                    >
+                      <option value="">Pilih Role</option>
+                      <option value="admin">Admin</option>
+                      <option value="superadmin">Super Admin</option>
+                    </Field>
+                    <ErrorMessage
+                      name="role"
+                      component="div"
+                      className="text-red-500 text-sm mt-1"
+                    />
+                  </div>
+
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -224,22 +247,19 @@ export default function LoginPageAdmin() {
                     disabled:opacity-50 disabled:cursor-not-allowed
                     shadow-md hover:shadow-lg"
                   >
-                    MASUK
+                    DAFTAR
                   </button>
                 </div>
               </Form>
             )}
           </Formik>
 
-          {/* Additional for Mobile/Tablet */}
+          {/* Tambahan untuk Mobile/Tablet */}
           <div className="mt-4 text-center text-sm text-gray-600">
             <p>
-              Belum punya akun?{" "}
-              <a
-                href="/admin-register"
-                className="text-[#4338CA] hover:underline"
-              >
-                Daftar Sekarang
+              Sudah punya akun?{" "}
+              <a href="/login" className="text-[#4338CA] hover:underline">
+                Masuk Sekarang
               </a>
             </p>
           </div>

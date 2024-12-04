@@ -1,13 +1,31 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import useAuthStore from "@stores/useAuthStore"; 
+import { jwtDecode } from "jwt-decode";
+import useAuthStore from "@stores/useAuthStore";
 
-const ProtectedRoute = ({ children, role }) => {
-  // Use Zustand store to get the token and role instead of localStorage
-  const { token, role: userRole } = useAuthStore();
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { token } = useAuthStore();
 
-  // Check if the user's role matches the required role and a token exists
-  return token && userRole === role ? children : <Navigate to="/login" />;
+  let role = null;
+
+  // Decode token if available
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token);
+      role = decodedToken.role; // Extract role from token
+    } catch (error) {
+      console.error("Invalid token:", error);
+      return <Navigate to="/login" />;
+    }
+  }
+
+  // Validate token and role (if requiredRole is provided)
+  if (!token || (requiredRole && !requiredRole.includes(role))) {
+    return <Navigate to="/login" />;
+  }
+
+  // Render children if validation passes
+  return children;
 };
 
 export default ProtectedRoute;

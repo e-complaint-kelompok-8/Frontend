@@ -36,7 +36,7 @@ class AuthService {
       const { token, role } = response.data.user;
 
       // Update global state dengan Zustand
-      
+
       useAuthStore.getState().setToken(token);
 
       return response.data.user;
@@ -53,6 +53,28 @@ class AuthService {
 
     // Hapus data user dari localStorage
     localStorage.removeItem("userData");
+  }
+
+  // Register Admin
+  static async registerAdmin(userData) {
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/register`, userData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
+  // Login Admin
+  static async loginAdmin(adminData) {
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/login`, adminData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
   }
 
   // Get current user from localStorage
