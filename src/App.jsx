@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import UserRoutes from "@routes/UserRoutes";
+// import UserRoutes from "@routes/UserRoutes";
 import AdminRoutes from "@routes/AdminRoutes";
 import SuperAdminRoutes from "@routes/SuperAdminRoutes";
 
@@ -31,7 +31,7 @@ function App() {
         <Route path="/admin-login" element={<LoginPageAdmin />} />
         <Route path="/admin-register" element={<RegisterPageAdmin />} />
 
-        <Route path="/user/*" element={<UserRoutes />} />
+        {/* <Route path="/user/*" element={<UserRoutes />} /> */}
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
 

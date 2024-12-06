@@ -14,7 +14,7 @@ export default function OTPVerificationPage() {
 
   // Get email and phone number from navigation state
   const [email, setEmail] = useState("");
-  const [no_telp, setNo_telp] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   useEffect(() => {
     const storedEmail = useAuthStore.getState().email;
@@ -130,7 +130,7 @@ export default function OTPVerificationPage() {
       });
 
       // Call backend to resend OTP
-      await AuthService.resendOtp({ email, no_telp });
+      await AuthService.resendOtp({ email, phoneNumber });
 
       // Show success message
       Swal.fire({
@@ -165,7 +165,7 @@ export default function OTPVerificationPage() {
       // Prepare OTP verification data
       const otpData = {
         email,
-        no_telp,
+        phoneNumber,
         otp: values.otp,
       };
 

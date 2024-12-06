@@ -19,7 +19,7 @@ export default function RegisterPage() {
     email: Yup.string()
       .email("Format email tidak valid")
       .required("Email wajib diisi"),
-    no_telp: Yup.string()
+    phoneNumber: Yup.string()
       .matches(/^[0-9]+$/, "Nomor handphone harus berupa angka")
       .min(10, "Nomor handphone minimal 10 digit")
       .max(15, "Nomor handphone maksimal 15 digit")
@@ -86,7 +86,7 @@ export default function RegisterPage() {
       navigate("/verify-otp", {
         state: {
           email: submitValues.email,
-          no_telp: submitValues.no_telp,
+          phoneNumber: submitValues.phoneNumber,
         },
       });
     } catch (error) {
@@ -153,7 +153,7 @@ export default function RegisterPage() {
             initialValues={{
               name: "",
               email: "",
-              no_telp: "",
+              phoneNumber: "",
               password: "",
               confirmPassword: "",
             }}
@@ -242,7 +242,7 @@ export default function RegisterPage() {
                   {/* No HandPhone Input */}
                   <div className="space-y-2">
                     <label
-                      htmlFor="no_telp"
+                      htmlFor="phoneNumber"
                       className="block text-sm font-medium text-gray-700"
                     >
                       No HandPhone
@@ -253,11 +253,11 @@ export default function RegisterPage() {
                       </div>
                       <Field
                         type="tel"
-                        name="no_telp"
+                        name="phoneNumber"
                         className={`
                           pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                           ${
-                            errors.no_telp && touched.no_telp
+                            errors.phoneNumber && touched.phoneNumber
                               ? "border-red-500 focus:ring-red-500 bg-red-50"
                               : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
                           }
@@ -266,7 +266,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     <ErrorMessage
-                      name="no_telp"
+                      name="phoneNumber"
                       component="div"
                       className="text-red-500 text-sm mt-1 "
                     />
