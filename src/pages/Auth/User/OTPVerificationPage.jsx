@@ -14,7 +14,7 @@ export default function OTPVerificationPage() {
 
   // Get email and phone number from navigation state
   const [email, setEmail] = useState("");
-  const [no_telp, setNo_telp] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   useEffect(() => {
     const storedEmail = useAuthStore.getState().email;
@@ -117,39 +117,6 @@ export default function OTPVerificationPage() {
     }
   };
 
-  // Handle resend OTP
-  const handleResendOTP = async () => {
-    try {
-      // Show loading
-      Swal.fire({
-        title: "Mengirim Ulang OTP...",
-        text: "Mohon tunggu sebentar",
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
-
-      // Call backend to resend OTP
-      await AuthService.resendOtp({ email, no_telp });
-
-      // Show success message
-      Swal.fire({
-        icon: "success",
-        title: "OTP Terkirim",
-        text: "Kode OTP baru telah dikirim ke email Anda",
-      });
-    } catch (error) {
-      // Handle error
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Mengirim Ulang OTP",
-        text:
-          error.response?.data?.message ||
-          "Terjadi kesalahan. Silakan coba lagi.",
-      });
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
@@ -165,7 +132,7 @@ export default function OTPVerificationPage() {
       // Prepare OTP verification data
       const otpData = {
         email,
-        no_telp,
+        phoneNumber,
         otp: values.otp,
       };
 
@@ -309,19 +276,6 @@ export default function OTPVerificationPage() {
               </Form>
             )}
           </Formik>
-
-          {/* Resend OTP Section */}
-          <div className="mt-4 text-center text-sm text-gray-600">
-            <p>
-              Tidak menerima kode?{" "}
-              <button
-                className="text-[#4338CA] hover:underline"
-                onClick={handleResendOTP}
-              >
-                Kirim Ulang
-              </button>
-            </p>
-          </div>
         </div>
       </div>
     </div>
