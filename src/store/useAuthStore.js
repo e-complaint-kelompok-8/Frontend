@@ -1,17 +1,44 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
+import { jwtDecode } from "jwt-decode";
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
-      role: null,
+      email: null,
       setToken: (token) => set({ token }),
-      setRole: (role) => set({ role }),
-      clearAuth: () => set({ token: null, role: null }), // Untuk logout
+      setEmail: (email) => set({ email }),
+      clearAuth: () => set({ token: null }),
+      getUserIdFromToken: () => {
+        const token = get().token;
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            return decoded.user_id; // Pastikan `user_id` sesuai dengan nama properti di payload JWT Anda
+          } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
+          }
+        }
+        return null;
+      },
+      getRoleFromToken: () => {
+        const token = get().token;
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            return decoded.role;
+          } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
+          }
+        }
+        return null;
+      },
     }),
+
     {
-      name: "auth-storage", // Nama key untuk localStorage
+      name: "auth-storage",
     }
   )
 );
