@@ -58,7 +58,7 @@ export default function LoginPageAdmin() {
       if (role === "admin" || role === "superadmin") {
         navigate("/admin/dashboard");
       } else {
-        navigate("/dashboard");
+        navigate("/admin/dashboard");
       }
     } catch (error) {
       // Close loading indicator
