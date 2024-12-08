@@ -1,11 +1,14 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@routes/ProtectedRoute";
+import Dashboard from "@pages/Admin/Dashboard";
 
 const AdminRoutes = () => {
   return (
     <ProtectedRoute requiredRole={["admin", "superadmin"]}>
-      <Routes></Routes>
+      <Routes>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
     </ProtectedRoute>
   );
 };
