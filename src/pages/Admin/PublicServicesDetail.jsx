@@ -15,27 +15,26 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link, useNavigate, useParams } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import Swal from "sweetalert2";
+import NewsService from "@services/NewsService";
 import * as Yup from "yup";
+import useAuthStore from "@stores/useAuthStore";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        return location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
-
   return (
     <div
       className={`bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-500 text-white p-4 md:p-6 space-y-6 h-full flex flex-col ${className} transition-colors duration-300`}
@@ -51,7 +50,11 @@ const Sidebar = ({ className, onClose }) => {
       <nav className="space-y-4 flex-grow">
         {[
           { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-          { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+          {
+            icon: MessageSquare,
+            label: "Complaint",
+            path: "/admin/complaints",
+          },
           {
             icon: Users,
             label: "Public Services",
@@ -90,21 +93,19 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        return location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
     { icon: Users, label: "Services", path: "/admin/public-services" },
     { icon: User, label: "Users", path: "/admin/users" },
   ];
@@ -329,24 +330,20 @@ const Header = () => {
 };
 
 const News = () => {
-  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
-  const [newsImage, setNewsImage] = useState(null);
+  const { id } = useParams();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const navigate = useNavigate();
-
-  const commenters = [
-    {
-      name: "Leo Messi",
-      image: "/placeholder.svg?height=48&width=48",
-      comment: "Ini akibat masyarakat sering buang sampah sembarangan.",
-    },
-    {
-      name: "Ariska",
-      image: "/placeholder.svg?height=48&width=48",
-      comment: "Pemerintah harus bertindak tegas dalam menangani hal ini.",
-    },
-  ];
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  const [newsImage, setNewsImage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [newsData, setNewsData] = useState({
+    title: "",
+    content: "",
+    category: "",
+    date: "",
+    photo_url: "",
+  });
 
   const NewsSchema = Yup.object().shape({
     title: Yup.string()
@@ -358,28 +355,66 @@ const News = () => {
       .min(20, "Konten minimal 20 karakter")
       .required("Konten wajib diisi"),
   });
+  const fetchNewsDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await NewsService.getNewsDetail(id);
+      const news = response.news;
 
-  const initialValues = {
-    title: "Pemerintah Meningkatkan Ketangguhan Bencana Alam",
-    category: "Lingkungan",
-    date: "2024-11-20",
-    content:
-      "Pemerintah Indonesia telah mengumumkan serangkaian langkah penanggulangan bencana...",
+      setNewsData({
+        title: news.title,
+        content: news.content,
+        category: news.category?.id?.toString() || news.category_id?.toString(),
+        date: news.date ? new Date(news.date).toISOString().split("T")[0] : "",
+        photo_url: news.photo_url,
+      });
+
+      setNewsImage(news.photo_url);
+    } catch (error) {
+      console.error("Error fetching news detail:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Gagal mengambil detail berita",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (id) {
+      fetchNewsDetail();
+    }
+  }, [id]);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      setNewsImage(file); // Simpan file langsung, bukan URL
+      // Preview image
       const reader = new FileReader();
-      reader.onload = () => setNewsImage(reader.result);
+      reader.onload = (e) => {
+        setNewsImage(e.target.result); // Untuk preview saja
+      };
       reader.readAsDataURL(file);
     }
   };
-
-  // Handle navigation back to previous page
   const handleGoBack = () => {
     navigate(-1);
   };
+
+  const handleDeleteComment = (index) => {
+    // Implementasi delete comment
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen lg:px-4 md:p-0">
@@ -392,11 +427,62 @@ const News = () => {
           <span className="text-xs sm:text-sm md:text-base">Kembali</span>
         </button>
       </div>
+
       <Formik
-        initialValues={initialValues}
+        initialValues={newsData}
         validationSchema={NewsSchema}
-        onSubmit={(values) => {
-          console.log("Updated news:", values);
+        enableReinitialize
+        onSubmit={async (values, { setSubmitting, resetForm }) => {
+          try {
+            console.log("Update values:", values);
+            setSubmitting(true);
+
+            // Ambil admin_id dari token yang disimpan di Zustand
+            const adminId = useAuthStore.getState().getAdminIdFromToken();
+
+            if (!adminId) {
+              throw new Error("Invalid admin id");
+            }
+
+            const updateData = {
+              admin_id: adminId,
+              title: values.title,
+              content: values.content,
+              category_id: parseInt(values.category),
+              date: values.date,
+              photo_url: newsData.photo_url, // Gunakan photo_url dari newsData
+            };
+
+            // Jika ada file gambar baru
+            if (values.newsImage instanceof File) {
+              updateData.new_image = values.newsImage; // Gunakan key berbeda untuk image baru
+              updateData.old_photo_url = newsData.photo_url; // Kirim URL foto lama untuk dihapus
+            }
+
+            console.log("Update data:", updateData);
+            await NewsService.updateNews(id, updateData);
+
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil",
+              text: "Berita berhasil diperbarui",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+
+            setNewsImage(null);
+            resetForm();
+            fetchNewsDetail(); // Refresh data setelah update
+          } catch (error) {
+            console.error("Error updating news:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Gagal",
+              text: error.message || "Gagal memperbarui berita",
+            });
+          } finally {
+            setSubmitting(false);
+          }
         }}
       >
         {({ touched, errors, setFieldValue }) => (
@@ -425,13 +511,21 @@ const News = () => {
                   className="hidden"
                   accept="image/*"
                   onChange={(e) => {
-                    handleImageChange(e);
-                    setFieldValue("newsImage", e.target.files[0]);
+                    const file = e.target.files[0];
+                    if (file) {
+                      // Preview image
+                      const reader = new FileReader();
+                      reader.onload = (e) => {
+                        setNewsImage(e.target.result); // Untuk preview
+                      };
+                      reader.readAsDataURL(file);
+                      // Simpan file ke form values
+                      setFieldValue("newsImage", file); // Gunakan newsImage sebagai key
+                    }
                   }}
                 />
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {/* Judul */}
                 <div>
                   <label
                     htmlFor="title"
@@ -455,7 +549,6 @@ const News = () => {
                   />
                 </div>
 
-                {/* Kategori */}
                 <div>
                   <label
                     htmlFor="category"
@@ -473,12 +566,12 @@ const News = () => {
                     }`}
                   >
                     <option value="">Pilih Kategori</option>
-                    <option value="Kesehatan">Kesehatan</option>
-                    <option value="Tranportasi">Tranportasi</option>
-                    <option value="Infrastruktur">Infrastruktur</option>
-                    <option value="Pendidikan">Pendidikan</option>
-                    <option value="Kemanan">Keamanan</option>
-                    <option value="Linkungan">Lingkungan</option>
+                    <option value="1">Kesehatan</option>
+                    <option value="2">Transportasi</option>
+                    <option value="3">Infrastruktur</option>
+                    <option value="4">Pendidikan</option>
+                    <option value="5">Keamanan</option>
+                    <option value="6">Lingkungan</option>
                   </Field>
                   <ErrorMessage
                     name="category"
@@ -487,7 +580,6 @@ const News = () => {
                   />
                 </div>
 
-                {/* Tanggal */}
                 <div>
                   <label
                     htmlFor="date"
@@ -513,7 +605,6 @@ const News = () => {
               </div>
             </div>
 
-            {/* Konten */}
             <div>
               <label
                 htmlFor="content"
@@ -538,7 +629,6 @@ const News = () => {
               />
             </div>
 
-            {/* Tombol Submit */}
             <div className="flex justify-end">
               <button
                 type="submit"
@@ -550,7 +640,7 @@ const News = () => {
           </Form>
         )}
       </Formik>
-      {/* Komentar */}
+
       <div className="col-span-full mt-6 p-4 bg-white rounded-md">
         <div
           className="flex justify-between items-center cursor-pointer"
@@ -573,10 +663,7 @@ const News = () => {
                 key={index}
                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
               >
-                {/* Gambar */}
                 <div className="bg-gray-300 w-8 h-8 sm:w-10 sm:h-10 rounded-full"></div>
-
-                {/* Konten Komentar */}
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900 text-xs sm:text-sm md:text-base">
                     {commenter.name}
@@ -585,8 +672,6 @@ const News = () => {
                     {commenter.comment}
                   </p>
                 </div>
-
-                {/* Tombol Hapus */}
                 <button
                   onClick={() => handleDeleteComment(index)}
                   className="text-red-500 hover:text-red-600"

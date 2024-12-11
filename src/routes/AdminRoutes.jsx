@@ -9,7 +9,7 @@ const AdminRoutes = () => {
     <ProtectedRoute requiredRole={["admin", "superadmin"]}>
       <Routes>
         <Route path="/public-services" element={<PublicServices />} />
-        <Route path="/public-services/*" element={<PublicServicesDetail />} />
+        <Route path="/news/:id" element={<PublicServicesDetail />} />
       </Routes>
     </ProtectedRoute>
   );

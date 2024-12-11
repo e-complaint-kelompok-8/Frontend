@@ -21,24 +21,23 @@ import {
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import NewsService from "@services/NewsService";
+import useAuthStore from "@stores/useAuthStore";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
-
   return (
     <div
       className={`bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-500 text-white p-4 md:p-6 space-y-6 h-full flex flex-col ${className} transition-colors duration-300`}
@@ -54,7 +53,11 @@ const Sidebar = ({ className, onClose }) => {
       <nav className="space-y-4 flex-grow">
         {[
           { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-          { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+          {
+            icon: MessageSquare,
+            label: "Complaint",
+            path: "/admin/complaints",
+          },
           {
             icon: Users,
             label: "Public Services",
@@ -93,21 +96,19 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
     { icon: Users, label: "Services", path: "/admin/public-services" },
     { icon: User, label: "Users", path: "/admin/users" },
   ];
@@ -133,7 +134,6 @@ const BottomNavigation = () => {
     </div>
   );
 };
-
 
 const Header = () => {
   const [showNotificationDropdown, setShowNotificationDropdown] =
@@ -334,43 +334,25 @@ const Header = () => {
 
 const PublicNews = () => {
   const navigate = useNavigate();
+  const [update, isUpdate] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [newsImage, setNewsImage] = useState(null);
+
+  const limit = 10;
+
   const [categories] = useState([
-    { id: 1, name: "Pendidikan" },
-    { id: 2, name: "Infrastruktur" },
-    { id: 3, name: "Lingkungan" },
-    { id: 4, name: "Kesehatan" },
-    { id: 5, name: "Sosial" },
-  ]);
-  const [newsData, setNewsData] = useState([
-    {
-      id: 1,
-      image: null,
-      title: "Edukasi Lingkungan Sejak Dini",
-      date: "2024-08-27",
-      category: 3,
-      content:
-        "Universitas Indonesia melaksanakan program edukasi kepada siswa sekolah dasar untuk meningkatkan kesadaran mencintai lingkungan.",
-    },
-    {
-      id: 2,
-      image: null,
-      title: "Trafo PLN untuk Warga Bogor",
-      date: "2024-01-30",
-      category: 5,
-      content:
-        "Berkat aspirasi warga saat reses, masyarakat Cikaret, Bogor, kini memiliki trafo PLN yang memberikan peningkatan akses listrik lebih merata.",
-    },
-    {
-      id: 3,
-      image: null,
-      title: "Peningkatan Ketangguhan Bencana",
-      date: "2024-02-09",
-      category: 1,
-      content:
-        "Pemerintah menggalakkan program pelatihan kesiapsiagaan penting megathrust, fokus pada kesiapan dan kesejahteraan.",
-    },
+    { value: "1", name: "Infrastruktur" },
+    { value: "2", name: "Transportasi" },
+    { value: "3", name: "Kesehatan" },
+    { value: "4", name: "Lingkungan" },
+    { value: "5", name: "Keamanan" },
+    { value: "6", name: "Pendidikan" },
   ]);
 
+  const [newsData, setNewsData] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -379,45 +361,158 @@ const PublicNews = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDropdown, setActiveDropdown] = useState(null);
 
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      const response = await NewsService.getAllNews(currentPage, limit);
+      console.log("API Response:", response);
+
+      // Sesuaikan dengan struktur response dari API
+      setNewsData(response.news || []); // Sesuaikan dengan response structure
+      setTotalPages(response.total_pages || 1);
+      setTotalItems(response.total_items || 0);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal mengambil data",
+        text: "Terjadi kesalahan saat mengambil data berita",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNews();
+  }, [currentPage]);
+
   const filteredNewsData = useMemo(() => {
     return newsData.filter((news) =>
       news.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [newsData, searchTerm]);
 
+  const renderPagination = () => {
+    return (
+      <div className="flex items-center justify-center gap-2 mt-6 pb-16 md:pb-8">
+        {/* Previous Button */}
+        <button
+          onClick={() => setCurrentPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-3 py-1 text-sm ${
+            currentPage === 1
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          « Previous
+        </button>
+
+        {/* Page Numbers */}
+        {[...Array(totalPages)].map((_, index) => {
+          const pageNumber = index + 1;
+          if (
+            pageNumber === 1 ||
+            pageNumber === totalPages ||
+            (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+          ) {
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage(pageNumber)}
+                className={`px-3 py-1 rounded ${
+                  pageNumber === currentPage
+                    ? "bg-indigo-600 text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          } else if (
+            pageNumber === currentPage - 2 ||
+            pageNumber === currentPage + 2
+          ) {
+            return (
+              <span key={pageNumber} className="px-2">
+                ...
+              </span>
+            );
+          }
+          return null;
+        })}
+
+        {/* Next Button */}
+        <button
+          onClick={() => setCurrentPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-3 py-1 text-sm ${
+            currentPage === totalPages
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Next »
+        </button>
+      </div>
+    );
+  };
+
   const NewsSchema = Yup.object().shape({
     title: Yup.string()
       .min(5, "Judul terlalu pendek!")
       .max(100, "Judul terlalu panjang!")
       .required("Judul wajib diisi"),
-    date: Yup.date()
-      .required("Tanggal wajib diisi")
-      .max(new Date(), "Tanggal tidak boleh di masa depan"),
     content: Yup.string()
       .min(20, "Konten terlalu pendek!")
       .max(500, "Konten terlalu panjang!")
       .required("Konten wajib diisi"),
-    category: Yup.string() // Ubah menjadi string karena value select adalah string
-      .required("Kategori wajib dipilih")
-      .nullable(), // Tambahkan nullable() untuk handle nilai kosong
+    category: Yup.string().required("Kategori wajib dipilih"),
+    date: Yup.date()
+      .required("Tanggal wajib diisi")
+      .max(new Date(), "Tanggal tidak boleh di masa depan"),
+    // Hapus required untuk image
     image: Yup.mixed()
-      .required("Gambar tidak boleh kosong") // Ubah pesan error
+      .nullable() // Tambahkan ini
       .test("fileSize", "Ukuran file terlalu besar", (value) => {
-        return !value || value.size <= 5 * 1024 * 1024;
+        if (!value || typeof value === "string") return true;
+        return value.size <= 5 * 1024 * 1024;
       })
       .test("fileType", "Format file tidak valid", (value) => {
-        return (
-          !value ||
-          ["image/jpeg", "image/png", "image/gif"].includes(value.type)
-        );
+        if (!value || typeof value === "string") return true;
+        return ["image/jpeg", "image/png", "image/gif"].includes(value.type);
       }),
   });
 
-  const handleImageChange = (event, setFieldValue) => {
+  useEffect(() => {
+    if (isUpdateModalOpen && selectedNewsItem) {
+      setSelectedImage(selectedNewsItem.photo_url);
+    } else {
+      setSelectedImage(null);
+    }
+  }, [isUpdateModalOpen, selectedNewsItem]);
+
+  const handleImageChange = async (event, setFieldValue) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedImage(URL.createObjectURL(file));
-      setFieldValue("image", file);
+      try {
+        // Preview image
+        setSelectedImage(URL.createObjectURL(file));
+        // Set file untuk upload
+        setFieldValue("image", file);
+      } catch (error) {
+        console.error("Error handling image:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Terjadi kesalahan saat memproses gambar",
+        });
+      }
     }
   };
 
@@ -432,50 +527,175 @@ const PublicNews = () => {
     }
   };
 
-  const handleAddNews = (values, { resetForm }) => {
-    const newNewsItem = {
-      id: newsData.length + 1,
-      image: selectedImage || null,
-      title: values.title,
-      date: values.date,
-      content: values.content,
-    };
-
-    setNewsData((prev) => [newNewsItem, ...prev]);
-    setSelectedImage(null);
-    setIsAddModalOpen(false);
-    resetForm();
+  const formatDate = (date) => {
+    return new Date(date).toISOString().split("T")[0];
   };
 
-  const handleUpdateNews = (values, { resetForm }) => {
-    const updatedNewsItem = {
-      ...selectedNewsItem,
-      image: selectedImage || selectedNewsItem.image,
-      title: values.title,
-      date: values.date,
-      content: values.content,
-    };
+  const handleAddNews = async (values, { resetForm, setSubmitting }) => {
+    try {
+      setSubmitting(true);
 
-    setNewsData((prev) =>
-      prev.map((item) =>
-        item.id === updatedNewsItem.id ? updatedNewsItem : item
-      )
-    );
-    setSelectedImage(null);
-    setIsUpdateModalOpen(false);
-    resetForm();
+      const adminId = useAuthStore.getState().getAdminIdFromToken();
+
+      if (!adminId) {
+        throw new Error("Invalid admin id");
+      }
+
+      await NewsService.createNews({
+        admin_id: adminId,
+        title: values.title,
+        content: values.content,
+        category_id: values.category, // Pastikan dalam bentuk integer
+        date: formatDate(values.date),
+        image: values.image, // Ini akan dihandle di NewsService untuk upload ke Cloudinary
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Berita berhasil ditambahkan",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      setSelectedImage(null);
+      setIsAddModalOpen(false);
+      resetForm();
+      fetchNews();
+    } catch (error) {
+      console.error("Error adding news:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.response?.data?.message || "Gagal menambahkan berita",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteNews = () => {
-    setNewsData((prev) =>
-      prev.filter((item) => !selectedNews.includes(item.id))
-    );
-    setSelectedNews([]);
+  const handleUpdateNews = async (values, { setSubmitting, resetForm }) => {
+    try {
+      setSubmitting(true);
+
+      const adminId = useAuthStore.getState().getAdminIdFromToken();
+
+      if (!adminId) {
+        throw new Error("Invalid admin id");
+      }
+
+      if (!selectedNewsItem) {
+        throw new Error("No news item selected");
+      }
+
+      const updateData = {
+        admin_id: adminId,
+        title: values.title,
+        content: values.content,
+        category_id: parseInt(values.category),
+        date: formatDate(values.date),
+        photo_url: selectedNewsItem.photo_url, // Gunakan selectedNewsItem bukan newsData
+      };
+
+      // Jika ada file gambar baru
+      if (values.image instanceof File) {
+        console.log("Updating with new image");
+        updateData.new_image = values.image;
+        updateData.old_photo_url = selectedNewsItem.photo_url; // Gunakan selectedNewsItem bukan newsData
+        console.log("Update data with image:", {
+          ...updateData,
+          old_photo_url: selectedNewsItem.photo_url,
+        });
+      }
+
+      await NewsService.updateNews(selectedNewsItem.id, updateData);
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Berita berhasil diperbarui",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      // Reset semua state dan tutup modal
+      setNewsImage(null);
+      setSelectedImage(null);
+      setSelectedNewsItem(null);
+      setIsUpdateModalOpen(false);
+      resetForm();
+      fetchNews();
+    } catch (error) {
+      console.error("Error updating news:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.message || "Gagal memperbarui berita",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteNews = async (id) => {
+    try {
+      // Pastikan ada ID yang dipilih
+      if (!selectedNews || selectedNews.length === 0) {
+        throw new Error("Tidak ada berita yang dipilih");
+      }
+
+      const result = await Swal.fire({
+        title: "Apakah Anda yakin?",
+        text: "Berita yang dihapus tidak dapat dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        await NewsService.deleteNews(selectedNews);
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil",
+          text: "Berita berhasil dihapus",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        // Reset semua state terkait
+        setSelectedNews([]);
+        setActiveDropdown(null); // Tutup dropdown jika ada
+        setIsUpdateModalOpen(false); // Tutup modal update jika terbuka
+        fetchNews();
+      }
+    } catch (error) {
+      console.error("Error deleting news:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.message || "Gagal menghapus berita",
+      });
+    }
   };
 
   const openUpdateModal = (news) => {
-    setSelectedNewsItem(news);
-    setSelectedImage(news.image);
+    console.log("News data for update:", news); // Untuk debugging
+
+    setSelectedNewsItem({
+      ...news,
+      // Pastikan category memiliki format yang konsisten
+      category: {
+        id: news.category?.id || news.category_id,
+        name: news.category?.name || news.category,
+      },
+    });
+
+    // Set image preview dari photo_url
+    setSelectedImage(news.photo_url);
     setIsUpdateModalOpen(true);
   };
 
@@ -496,21 +716,23 @@ const PublicNews = () => {
   };
 
   const handleNewsItemClick = (newsId) => {
-    navigate(`/news/${newsId}`);
+    navigate(`/admin/news/${newsId}`);
   };
 
   const renderNewsCard = (news) => (
-    <div className="rounded-lg md:p-4 mb-4 bg-white shadow-md">
+    <div className="rounded-lg md:p-4 mb-4 bg-white shadow-md" key={news.id}>
       {/* Image Section - Clickable */}
       <div onClick={() => handleNewsItemClick(news.id)}>
-        {news.image ? (
+        {news.photo_url ? ( // Ubah dari image_url ke photo_url
           <img
-            src={news.image}
+            src={news.photo_url}
             alt={news.title}
             className="w-full h-40 object-cover rounded-md mb-4"
           />
         ) : (
-          <div className="w-full h-40 bg-gray-200 rounded-md mb-4"></div>
+          <div className="w-full h-40 bg-gray-200 rounded-md mb-4 flex items-center justify-center">
+            <FileImage className="w-8 h-8 text-gray-400" />
+          </div>
         )}
       </div>
 
@@ -554,7 +776,7 @@ const PublicNews = () => {
                   <button
                     onClick={() => {
                       setSelectedNews([news.id]);
-                      handleDeleteNews();
+                      // handleDeleteNews();
                       setActiveDropdown(null);
                     }}
                     className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600"
@@ -571,10 +793,14 @@ const PublicNews = () => {
             onClick={() => handleNewsItemClick(news.id)}
             className="cursor-pointer"
           >
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+            <div className="flex items-center gap-2 text-xs mb-4">
+              {/* <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-800">
+                {categories.find((c) => c.id === parseInt(news.category))?.name}
+              </span> */}
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-800">
-                {categories.find((c) => c.id === news.category)?.name}
+                {news.category.name}
               </span>
+
               <span>
                 {new Date(news.date).toLocaleDateString("id-ID", {
                   year: "numeric",
@@ -634,7 +860,6 @@ const PublicNews = () => {
               key={news.id}
               className="hover:bg-gray-50 transition-colors cursor-pointer"
             >
-              {/* Checkbox Cell */}
               <td className="p-4" onClick={(e) => e.stopPropagation()}>
                 <input
                   type="checkbox"
@@ -646,21 +871,19 @@ const PublicNews = () => {
                   className="form-checkbox h-5 w-5 text-indigo-600"
                 />
               </td>
-
-              {/* Image Cell */}
               <td className="p-4" onClick={() => handleNewsItemClick(news.id)}>
-                {news.image ? (
+                {news.photo_url ? ( // Ubah dari image_url ke photo_url
                   <img
-                    src={news.image}
+                    src={news.photo_url}
                     alt={news.title}
                     className="h-16 w-16 object-cover rounded-md"
                   />
                 ) : (
-                  <div className="h-16 w-16 bg-gray-200 rounded-md"></div>
+                  <div className="h-16 w-16 bg-gray-200 rounded-md flex items-center justify-center">
+                    <FileImage className="w-6 h-6 text-gray-400" />
+                  </div>
                 )}
               </td>
-
-              {/* Content Cell */}
               <td className="p-4" onClick={() => handleNewsItemClick(news.id)}>
                 <div className="text-sm font-medium text-gray-900 line-clamp-2">
                   {news.title}
@@ -669,43 +892,37 @@ const PublicNews = () => {
                   {news.content}
                 </div>
               </td>
-
-              {/* Category Cell */}
               <td className="p-4" onClick={() => handleNewsItemClick(news.id)}>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  {categories.find((c) => c.id === news.category)?.name}
+                  {/* {
+                    categories.find((c) => c.id === parseInt(news.category))
+                      ?.name
+                  } */}
+                  {news.category.name}
                 </span>
               </td>
-
-              {/* Date Cell */}
               <td
                 className="p-4 text-sm text-gray-500"
                 onClick={() => handleNewsItemClick(news.id)}
               >
                 {new Date(news.date).toLocaleDateString("id-ID", {
                   year: "numeric",
-                  month: "long",
+                  month: "numeric",
                   day: "numeric",
                 })}
               </td>
-
-              {/* Actions Cell */}
               <td className="p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center space-x-4">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openUpdateModal(news);
-                    }}
+                    onClick={() => openUpdateModal(news)}
                     className="text-indigo-600 hover:text-indigo-900 transition-colors"
                   >
                     <Pencil size={20} />
                   </button>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setSelectedNews([news.id]);
-                      handleDeleteNews();
+                      // handleDeleteNews();
                     }}
                     className="text-red-600 hover:text-red-900 transition-colors"
                   >
@@ -746,11 +963,19 @@ const PublicNews = () => {
   const renderModal = (isUpdate = false) => {
     const initialValues = isUpdate
       ? {
-          ...selectedNewsItem,
-          image: selectedNewsItem.image || null,
-          category: selectedNewsItem.category?.toString() || "",
+          title: selectedNewsItem.title,
+          content: selectedNewsItem.content,
+          category: selectedNewsItem.category.id.toString(),
+          date: formatDate(selectedNewsItem.date),
+          image: selectedNewsItem.photo_url,
         }
-      : { title: "", date: "", content: "", category: "", image: null };
+      : {
+          title: "",
+          content: "",
+          category: "",
+          date: "",
+          image: null,
+        };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
@@ -770,8 +995,9 @@ const PublicNews = () => {
             initialValues={initialValues}
             validationSchema={NewsSchema}
             onSubmit={isUpdate ? handleUpdateNews : handleAddNews}
+            enableReinitialize
           >
-            {({ setFieldValue, errors, touched, resetForm }) => (
+            {({ setFieldValue, errors, touched, resetForm, isSubmitting }) => (
               <Form className="p-6 space-y-5">
                 {/* Image Upload */}
                 <div>
@@ -811,105 +1037,152 @@ const PublicNews = () => {
                   />
                 </div>
 
-                {/* Input Fields */}
-                {[
-                  {
-                    name: "title",
-                    label: "Judul",
-                    type: "text",
-                    placeholder: "Masukkan judul berita",
-                    icon: <Pencil size={20} className="text-gray-400" />,
-                  },
-                  {
-                    name: "category", // Tambahkan field kategori
-                    label: "Kategori",
-                    type: "select",
-                    icon: <AlignLeft size={20} className="text-gray-400" />,
-                    options: categories, // Pastikan categories sudah didefinisikan di state
-                  },
-                  {
-                    name: "date",
-                    label: "Tanggal",
-                    type: "date",
-                    icon: <Calendar size={20} className="text-gray-400" />,
-                  },
-                  {
-                    name: "content",
-                    label: "Konten",
-                    type: "textarea",
-                    placeholder: "Masukkan konten berita",
-                    icon: <AlignLeft size={20} className="text-gray-400" />,
-                  },
-                ].map(({ name, label, type, placeholder, icon, options }) => (
-                  <div key={name} className="relative">
-                    <label
-                      htmlFor={name}
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      {label}
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        {icon}
-                      </div>
-                      {type === "select" ? (
-                        <Field
-                          as="select"
-                          name={name}
-                          id={name}
-                          className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none 
-                            ${
-                              touched[name] && errors[name]
-                                ? "border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500"
-                                : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                            }`}
-                        >
-                          <option value="">Pilih Kategori</option>
-                          {options.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))}
-                        </Field>
-                      ) : (
-                        <Field
-                          type={type}
-                          name={name}
-                          id={name}
-                          as={type === "textarea" ? "textarea" : "input"}
-                          rows={type === "textarea" ? 3 : undefined}
-                          placeholder={placeholder}
-                          className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none 
-                            ${
-                              touched[name] && errors[name]
-                                ? "border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500"
-                                : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                            }`}
-                        />
-                      )}
+                {/* Title Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Judul
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Pencil size={20} className="text-gray-400" />
                     </div>
-                    <ErrorMessage
-                      name={name}
-                      component="p"
-                      className="text-red-500 text-sm mt-1"
+                    <Field
+                      type="text"
+                      name="title"
+                      placeholder="Masukkan judul berita"
+                      className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none ${
+                        errors.title && touched.title
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                      }`}
                     />
                   </div>
-                ))}
+                  <ErrorMessage
+                    name="title"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                {/* Category Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori
+                  </label>
+                  <div className="relative">
+                    <Field
+                      as="select"
+                      name="category"
+                      className={`block w-full pl-3 pr-10 py-2 border rounded-md focus:outline-none ${
+                        errors.category && touched.category
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                      }`}
+                    >
+                      <option value="">Pilih Kategori</option>
+                      {categories.map((category) => (
+                        <option key={category.value} value={category.value}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <ErrorMessage
+                    name="category"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                {/* Date Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tanggal
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar size={20} className="text-gray-400" />
+                    </div>
+                    <Field
+                      type="date"
+                      name="date"
+                      className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none ${
+                        errors.date && touched.date
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                      }`}
+                    />
+                  </div>
+                  <ErrorMessage
+                    name="date"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                {/* Content Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Konten
+                  </label>
+                  <div className="relative">
+                    <Field
+                      as="textarea"
+                      name="content"
+                      rows={4}
+                      placeholder="Masukkan konten berita"
+                      className={`block w-full p-3 border rounded-md focus:outline-none ${
+                        errors.content && touched.content
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                      }`}
+                    />
+                  </div>
+                  <ErrorMessage
+                    name="content"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-2">
+                <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={() => handleCloseModal(resetForm, isUpdate)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium 
+                      ${
+                        isSubmitting
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-50"
+                      } 
+                      transition-colors`}
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md text-sm font-medium hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 
+                      text-white rounded-md text-sm font-medium relative
+                      ${
+                        isSubmitting
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:from-indigo-600 hover:to-purple-700"
+                      } 
+                      transition-all shadow-md hover:shadow-lg min-w-[100px]`}
                   >
-                    {isUpdate ? "Perbarui Berita" : "Tambah Berita"}
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                        <span>Loading...</span>
+                      </div>
+                    ) : isUpdate ? (
+                      "Perbarui"
+                    ) : (
+                      "Tambah"
+                    )}
                   </button>
                 </div>
               </Form>
@@ -920,19 +1193,21 @@ const PublicNews = () => {
     );
   };
 
+  // Main Return
   return (
-    <div className="md:max-w-6xl md:mx-auto  md:px-4">
-      <div className="flex flex-row justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Berita Terkini</h1>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          <Plus size={20} className="mr-2" />
-          Tambah
-        </button>
+    <div className="md:max-w-6xl md:mx-auto md:px-4">
+      <div className="flex flex-col space-y-4 mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">Berita Terkini</h1>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <Plus size={20} className="mr-2" />
+            Tambah
+          </button>
+        </div>
       </div>
-
       {/* Bulk Action Area */}
       {selectedNews.length > 0 && (
         <div className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center mb-4">
@@ -948,12 +1223,21 @@ const PublicNews = () => {
           </button>
         </div>
       )}
-
-      {renderNewsTable()}
-
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+        </div>
+      ) : (
+        <>
+          {renderNewsTable()}
+          {renderPagination()}
+        </>
+      )}
       {/* Modals */}
-      {isAddModalOpen && renderModal()}
-      {isUpdateModalOpen && renderModal(true)}
+      {isAddModalOpen && renderModal(false)} {/* Pass false for add modal */}
+      {isUpdateModalOpen && renderModal(true)}{" "}
+      {/* Pass true for update modal */}
     </div>
   );
 };
@@ -997,7 +1281,7 @@ export default function PublicServices() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-100 pb-16 md:pb-16 lg:pb-0">
+    <div className="flex h-screen w-full bg-gray-100 pb-16 md:pb-16 lg:pb-0">
       {/* Persistent Sidebar for Large Screens */}
       <Sidebar className="hidden lg:block w-64 fixed h-full" />
 
@@ -1007,7 +1291,6 @@ export default function PublicServices() {
         <main className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
             <PublicNews />
-            <Pagination />
           </div>
         </main>
 
