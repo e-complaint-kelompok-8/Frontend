@@ -23,6 +23,7 @@ import * as Yup from "yup";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import NewsService from "@services/NewsService";
+import CategoryService from "@services/CategoryService";
 import useAuthStore from "@stores/useAuthStore";
 
 const Sidebar = ({ className, onClose }) => {
@@ -334,6 +335,8 @@ const Header = () => {
 
 const PublicNews = () => {
   const navigate = useNavigate();
+
+  const [categories, setCategories] = useState([]);
   const [update, isUpdate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -343,15 +346,6 @@ const PublicNews = () => {
 
   const limit = 10;
 
-  const [categories] = useState([
-    { value: "1", name: "Infrastruktur" },
-    { value: "2", name: "Transportasi" },
-    { value: "3", name: "Kesehatan" },
-    { value: "4", name: "Lingkungan" },
-    { value: "5", name: "Keamanan" },
-    { value: "6", name: "Pendidikan" },
-  ]);
-
   const [newsData, setNewsData] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -360,6 +354,24 @@ const PublicNews = () => {
   const [selectedNews, setSelectedNews] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeDropdown, setActiveDropdown] = useState(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await CategoryService.getCategories();
+        setCategories(response || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Gagal mengambil data kategori",
+        });
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     fetchNews();
@@ -1081,7 +1093,7 @@ const PublicNews = () => {
                     >
                       <option value="">Pilih Kategori</option>
                       {categories.map((category) => (
-                        <option key={category.value} value={category.value}>
+                        <option key={category.id} value={category.id}>
                           {category.name}
                         </option>
                       ))}

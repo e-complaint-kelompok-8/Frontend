@@ -21,6 +21,7 @@ import Swal from "sweetalert2";
 import NewsService from "@services/NewsService";
 import * as Yup from "yup";
 import useAuthStore from "@stores/useAuthStore";
+import CategoryService from "@services/CategoryService";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
@@ -334,6 +335,7 @@ const News = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const [categories, setCategories] = useState([]);
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [newsImage, setNewsImage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -381,6 +383,24 @@ const News = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await CategoryService.getCategories();
+        setCategories(response || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Gagal mengambil data kategori",
+        });
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -566,12 +586,11 @@ const News = () => {
                     }`}
                   >
                     <option value="">Pilih Kategori</option>
-                    <option value="1">Kesehatan</option>
-                    <option value="2">Transportasi</option>
-                    <option value="3">Infrastruktur</option>
-                    <option value="4">Pendidikan</option>
-                    <option value="5">Keamanan</option>
-                    <option value="6">Lingkungan</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </Field>
                   <ErrorMessage
                     name="category"
