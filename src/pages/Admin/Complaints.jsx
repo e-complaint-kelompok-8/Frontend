@@ -19,6 +19,7 @@ import {
 import Swal from "sweetalert2";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import ComplaintService from "@services/ComplaintService";
+import CategoryService from "@services/CategoryService";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
@@ -331,13 +332,13 @@ const Header = () => {
 const EmptyState = ({
   selectedCategory,
   selectedStatus,
-  complaintCategories,
+  categories, // Ganti complaintCategories dengan categories
   complaintStatuses,
 }) => {
   const getMessage = () => {
-    const categoryName = complaintCategories.find(
-      (cat) => cat.value === selectedCategory
-    )?.label;
+    const categoryName = categories.find(
+      (cat) => cat.id.toString() === selectedCategory
+    )?.name; // Sesuaikan dengan struktur data API
     const statusName = complaintStatuses.find(
       (stat) => stat.value === selectedStatus
     )?.label;
@@ -399,6 +400,7 @@ const EmptyState = ({
 
 const ComplaintList = () => {
   // State Management
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [complaints, setComplaints] = useState([]);
@@ -407,16 +409,6 @@ const ComplaintList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalComplaints, setTotalComplaints] = useState(0);
 
-  const complaintCategories = [
-    { value: "ALL", label: "Semua Kategori" },
-    { value: "1", label: "Infrastruktur" },
-    { value: "2", label: "Transportasi" },
-    { value: "3", label: "Kesehatan" },
-    { value: "4", label: "Lingkungan" },
-    { value: "5", label: "Keamanan" },
-    { value: "6", label: "Pendidikan" },
-  ];
-
   const complaintStatuses = [
     { value: "ALL", label: "Semua Status" },
     { value: "proses", label: "Dalam Proses" },
@@ -424,6 +416,29 @@ const ComplaintList = () => {
     { value: "selesai", label: "Selesai" },
     { value: "batal", label: "Dibatalkan" },
   ];
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await CategoryService.getCategories();
+        console.log(response);
+        const fetchedCategories = response || [];
+        setCategories([
+          { id: "ALL", name: "Semua Kategori" },
+          ...fetchedCategories,
+        ]);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Gagal mengambil data kategori",
+        });
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1); // Reset ke halaman pertama ketika filter berubah
@@ -531,12 +546,12 @@ const ComplaintList = () => {
           <div className="relative flex-1">
             <select
               value={selectedCategory}
-              onChange={handleCategoryChange} // Gunakan handler baru
+              onChange={handleCategoryChange}
               className="appearance-none w-full px-3 md:px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 text-sm md:text-base text-gray-700"
             >
-              {complaintCategories.map((category) => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -573,7 +588,7 @@ const ComplaintList = () => {
         <EmptyState
           selectedCategory={selectedCategory}
           selectedStatus={selectedStatus}
-          complaintCategories={complaintCategories}
+          categories={categories} // Kirim categories dari state
           complaintStatuses={complaintStatuses}
         />
       ) : (
