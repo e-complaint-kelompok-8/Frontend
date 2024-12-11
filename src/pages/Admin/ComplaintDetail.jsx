@@ -15,25 +15,25 @@ import {
   ChevronRight,
   Edit,
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import Swal from "sweetalert2";
+
+import ComplaintService from "@services/ComplaintService";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        return location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
 
   return (
@@ -51,7 +51,11 @@ const Sidebar = ({ className, onClose }) => {
       <nav className="space-y-4 flex-grow">
         {[
           { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-          { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+          {
+            icon: MessageSquare,
+            label: "Complaint",
+            path: "/admin/complaints",
+          },
           {
             icon: Users,
             label: "Public Services",
@@ -90,21 +94,19 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === path;
+    switch (path) {
+      case "/admin/complaints":
+        return location.pathname.startsWith("/admin/complaint");
+      case "/admin/public-services":
+        return location.pathname.startsWith("/admin/news");
+      default:
+        return location.pathname === path;
     }
-    if (path === "/users") {
-      return location.pathname.startsWith("/user");
-    }
-    if (path === "/public-services" && location.pathname.startsWith("/news")) {
-      return true;
-    }
-    return location.pathname.startsWith(path);
   };
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
     { icon: Users, label: "Services", path: "/admin/public-services" },
     { icon: User, label: "Users", path: "/admin/users" },
   ];
@@ -139,7 +141,6 @@ const Header = () => {
   const profileRef = useRef(null);
   const navigate = useNavigate();
 
-  // Mock data dengan nama pengirim
   const recentComplaints = [
     {
       id: 1,
@@ -213,19 +214,19 @@ const Header = () => {
                 }
               >
                 <Bell className="h-6 w-6 text-gray-400" />
-                {recentComplaints.length > 0 && (
+                {/* {recentComplaints.length > 0 && (
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 transform translate-x-1/2 -translate-y-1/2"></span>
-                )}
+                )} */}
               </button>
 
               {showNotificationDropdown && (
                 <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-          w-[calc(100%-2rem)] md:w-96 
-          bg-white border-none rounded-lg shadow-2xl 
+                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4
+          w-[calc(100%-2rem)] md:w-96
+          bg-white border-none rounded-lg shadow-2xl
           z-50
-          md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-          md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
+          md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8
+          md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white
           md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
                 >
                   <div className="p-4 bg-white rounded-lg shadow-lg">
@@ -235,7 +236,7 @@ const Header = () => {
                       </h3>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
-                      {recentComplaints.map((complaint) => (
+                      {/* {recentComplaints.map((complaint) => (
                         <div
                           key={complaint.id}
                           className="py-3 border-b last:border-b-0 flex items-center hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-200"
@@ -262,15 +263,15 @@ const Header = () => {
                             </p>
                           </div>
                         </div>
-                      ))}
+                      ))} */}
                     </div>
-                    {recentComplaints.length > 0 && (
+                    {/* {recentComplaints.length > 0 && (
                       <div className="mt-3 text-center">
                         <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
                           Lihat Semua Komplain
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               )}
@@ -297,12 +298,12 @@ const Header = () => {
 
               {showProfileDropdown && (
                 <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-                w-[calc(50%-2rem)] md:w-48 
-                bg-white border-none rounded-lg shadow-2xl 
+                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4
+                w-[calc(50%-2rem)] md:w-48
+                bg-white border-none rounded-lg shadow-2xl
                 z-50
-                md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-                md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
+                md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8
+                md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white
                 md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
                 >
                   <div className="py-1 bg-white rounded-lg shadow-lg">
@@ -329,55 +330,133 @@ const Header = () => {
 };
 
 const ComplaintForm = () => {
-  const location = useLocation();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // State for image slider
+  const [loading, setLoading] = useState(true);
+  const [complaint, setComplaint] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const images = [
-    { id: 1, src: "/placeholder1.jpg" },
-    { id: 2, src: "/placeholder2.jpg" },
-    { id: 3, src: "/placeholder3.jpg" },
-  ];
 
-  // Handle navigation back to previous page
+  useEffect(() => {
+    fetchComplaintDetail();
+  }, [id]);
+
+  const fetchComplaintDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await ComplaintService.getComplaintDetail(id);
+      console.log(response.complaint);
+      setComplaint(response.complaint);
+    } catch (error) {
+      console.error("Error fetching complaint:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Mengambil Data",
+        text: "Terjadi kesalahan saat mengambil detail pengaduan",
+      });
+      navigate(-1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoBack = () => {
     navigate(-1);
   };
 
-  // Handle image slider navigation
   const nextImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    if (complaint?.photos?.length) {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % complaint.photos.length
+      );
+    }
   };
 
   const prevImage = () => {
-    setCurrentImageIndex(
-      (prevIndex) => (prevIndex - 1 + images.length) % images.length
-    );
+    if (complaint?.photos?.length) {
+      setCurrentImageIndex(
+        (prevIndex) =>
+          (prevIndex - 1 + complaint.photos.length) % complaint.photos.length
+      );
+    }
   };
 
-  // Validation schema
   const validationSchema = Yup.object().shape({
-    response: Yup.string()
+    content: Yup.string()
       .required("Tanggapan wajib diisi")
       .min(10, "Tanggapan minimal 10 karakter")
-      .max(500, "Tanggapan maksimal 500 karakter"),
+      .max(2000, "Tanggapan maksimal 2000 karakter"),
   });
 
-  const handleSubmit = (values, { setSubmitting, resetForm }) => {
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Response submitted:", values);
-      resetForm();
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    try {
+      // Cek status complaint
+      if (complaint?.status?.toLowerCase() === "tanggapi") {
+        // Update feedback yang sudah ada
+        await ComplaintService.updateFeedback(
+          complaint.feedback[0].id,
+          values.content
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil",
+          text: "Tanggapan berhasil diperbarui",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        // Tambah feedback baru
+        await ComplaintService.addFeedback(id, values.content);
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil",
+          text: "Tanggapan berhasil dikirim",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        resetForm(); // Reset form hanya untuk feedback baru
+      }
+
+      fetchComplaintDetail(); // Refresh data
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.response?.data?.message || "Gagal mengirim tanggapan",
+      });
+    } finally {
       setSubmitting(false);
-    }, 400);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "proses":
+        return "bg-yellow-100 text-yellow-800";
+      case "selesai":
+        return "bg-green-100 text-green-800";
+      case "batal":
+        return "bg-red-100 text-red-800";
+      case "tanggapi":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
     <div className="min-h-screen lg:px-4 md:p-0 pb-24 md:pb-6">
-      {/* Back Button */}
       <div className="mb-6">
         <button
           onClick={handleGoBack}
@@ -388,133 +467,257 @@ const ComplaintForm = () => {
         </button>
       </div>
 
-      {/* Complaint Details Card */}
       <div className="bg-white rounded-lg shadow p-4 md:p-6">
-        {/* Complaint Header */}
         <div className="flex justify-between items-start mb-4 md:mb-6">
           <div className="flex items-center space-x-3 md:space-x-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
-            <h2 className="text-lg md:text-xl font-semibold">Adam Kurniawan</h2>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full overflow-hidden">
+              {complaint?.user?.photo_url ? (
+                <img
+                  src={complaint.user.photo_url}
+                  alt={complaint.user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-semibold">
+                  {complaint?.user?.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-semibold">
+                {complaint?.user?.name}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {complaint?.complaint_number}
+              </p>
+            </div>
           </div>
-          <span className="px-2 md:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs md:text-sm">
-            PROGRESS
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+              complaint?.status
+            )}`}
+          >
+            {complaint?.status?.toUpperCase()}
           </span>
         </div>
 
-        {/* Complaint Description */}
-        <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
-          Terjadi kebakaran pada pukul 20.00 di cinere jawa barat
-        </p>
-
-        {/* Responsive Image Display */}
-        <div className="mb-8">
-          {/* Mobile Slider */}
-          <div className="md:hidden relative">
-            <div className="aspect-square rounded-lg bg-gray-300 overflow-hidden relative">
-              {images.map((img, index) => (
-                <div
-                  key={img.id}
-                  className={`absolute inset-0 transition-opacity duration-300 ${
-                    index === currentImageIndex ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <div className="w-full h-full bg-gray-300"></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Mobile Navigation Buttons */}
-            <button
-              onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2"
-            >
-              <ChevronRight />
-            </button>
-
-            {/* Image Indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
-              {images.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentImageIndex
-                      ? "bg-indigo-600"
-                      : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Desktop/Tablet Grid Display */}
-          <div className="hidden md:grid grid-cols-3 gap-4">
-            {images.map((img) => (
-              <div
-                key={img.id}
-                className="aspect-square rounded-lg bg-gray-300 overflow-hidden"
-              >
-                {/* Placeholder for image - replace with actual image when available */}
-                <div className="w-full h-full bg-gray-300"></div>
-              </div>
-            ))}
-          </div>
+        <div className="mb-4">
+          <h3 className="font-medium text-lg mb-2">{complaint?.title}</h3>
+          <p className="text-sm md:text-base text-gray-600">
+            {complaint?.description}
+          </p>
         </div>
 
-        {/* Response Section with Formik */}
+        {complaint?.photos?.length > 0 && (
+          <div className="mb-8">
+            {/* Mobile Slider */}
+            <div className="md:hidden relative">
+              <div className="aspect-square rounded-lg overflow-hidden relative">
+                {complaint.photos.map((photo, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-opacity duration-300 ${
+                      index === currentImageIndex ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    <img
+                      src={photo.photo_url}
+                      alt={`Foto ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2"
+              >
+                <ChevronLeft />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2"
+              >
+                <ChevronRight />
+              </button>
+
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
+                {complaint.photos.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === currentImageIndex
+                        ? "bg-indigo-600"
+                        : "bg-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop/Tablet Grid Display */}
+            <div className="hidden md:grid grid-cols-3 gap-4">
+              {complaint.photos.map((photo, index) => (
+                <div
+                  key={index}
+                  className="aspect-square rounded-lg overflow-hidden"
+                >
+                  <img
+                    src={photo.photo_url}
+                    alt={`Foto ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="border-t pt-4 md:pt-6">
           <h3 className="font-medium mb-3 md:mb-4 text-sm md:text-base">
-            Tanggapan
+            {complaint?.status?.toLowerCase() === "batal"
+              ? "Alasan Pembatalan"
+              : "Tanggapan"}
           </h3>
-          <Formik
-            initialValues={{ response: "" }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ errors, touched, isSubmitting }) => (
-              <Form className="space-y-4">
-                <div className="space-y-2">
-                  <Field
-                    as="textarea"
-                    name="response"
-                    placeholder="Isi Tanggapan Disini"
-                    className={`
-                      w-full p-3 md:p-4 rounded-lg border text-sm md:text-base
-                      focus:outline-none focus:ring-2 transition-all duration-300
-                      ${
-                        errors.response && touched.response
-                          ? "border-red-500 focus:ring-red-500 bg-red-50"
-                          : "border-gray-300 focus:ring-indigo-500 hover:border-indigo-500/50"
-                      }
-                    `}
-                    rows={4}
-                  />
-                  <ErrorMessage
-                    name="response"
-                    component="div"
-                    className="text-red-500 text-xs md:text-sm mt-1"
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-4 md:px-6 py-2 bg-indigo-600 text-white rounded-lg 
-                    hover:bg-indigo-700 transition-all duration-300 
-                    text-sm md:text-base disabled:opacity-50 
-                    disabled:cursor-not-allowed transform active:scale-95"
-                  >
-                    {isSubmitting ? "Mengirim..." : "Kirim"}
-                  </button>
-                </div>
-              </Form>
-            )}
-          </Formik>
+
+          {complaint?.status?.toLowerCase() === "batal" ? (
+            <div className="p-4 bg-red-50 rounded-lg text-red-700">
+              <p>{complaint?.reason || "Tidak ada alasan yang dicantumkan"}</p>
+            </div>
+          ) : complaint?.status?.toLowerCase() === "selesai" ? (
+            <div className="space-y-2">
+              <textarea
+                value={complaint?.feedback?.content || ""}
+                readOnly
+                className="w-full p-3 md:p-4 rounded-lg border text-sm md:text-base
+                  bg-gray-50 border-gray-300"
+                rows={4}
+              />
+            </div>
+          ) : complaint?.status?.toLowerCase() === "tanggapi" ? (
+            <Formik
+              initialValues={{
+                content: complaint?.feedback?.[0]?.content || "",
+              }}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
+              enableReinitialize={true}
+            >
+              {({ errors, touched, isSubmitting }) => (
+                <Form className="space-y-4">
+                  <div className="space-y-2">
+                    <Field
+                      as="textarea"
+                      name="content"
+                      placeholder="Edit Tanggapan Disini"
+                      className={`
+              w-full p-3 md:p-4 rounded-lg border text-sm md:text-base
+              focus:outline-none focus:ring-2 transition-all duration-300
+              ${
+                errors.content && touched.content
+                  ? "border-red-500 focus:ring-red-500 bg-red-50"
+                  : "border-gray-300 focus:ring-indigo-500 hover:border-indigo-500/50"
+              }
+            `}
+                      rows={4}
+                    />
+                    <ErrorMessage
+                      name="content"
+                      component="div"
+                      className="text-red-500 text-xs md:text-sm mt-1"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-4 md:px-6 py-2 bg-indigo-600 text-white rounded-lg 
+              hover:bg-indigo-700 transition-all duration-300 
+              text-sm md:text-base disabled:opacity-50 
+              disabled:cursor-not-allowed transform active:scale-95"
+                    >
+                      {isSubmitting ? "Memperbarui..." : "Update Tanggapan"}
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          ) : (
+            <Formik
+              initialValues={{
+                content: "",
+              }}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
+            >
+              {({ errors, touched, isSubmitting }) => (
+                <Form className="space-y-4">
+                  <div className="space-y-2">
+                    <Field
+                      as="textarea"
+                      name="content"
+                      placeholder="Isi Tanggapan Disini"
+                      className={`
+                        w-full p-3 md:p-4 rounded-lg border text-sm md:text-base
+                        focus:outline-none focus:ring-2 transition-all duration-300
+                        ${
+                          errors.content && touched.content
+                            ? "border-red-500 focus:ring-red-500 bg-red-50"
+                            : "border-gray-300 focus:ring-indigo-500 hover:border-indigo-500/50"
+                        }
+                      `}
+                      rows={4}
+                    />
+                    <ErrorMessage
+                      name="content"
+                      component="div"
+                      className="text-red-500 text-xs md:text-sm mt-1"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-4 md:px-6 py-2 bg-indigo-600 text-white rounded-lg 
+                        hover:bg-indigo-700 transition-all duration-300 
+                        text-sm md:text-base disabled:opacity-50 
+                        disabled:cursor-not-allowed transform active:scale-95"
+                    >
+                      {isSubmitting ? "Mengirim..." : "Kirim"}
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          )}
+
+          {complaint?.feedbacks?.length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">
+                Riwayat Tanggapan
+              </h4>
+              <div className="space-y-4">
+                {complaint.feedbacks.map((feedback, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">{feedback.content}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {new Date(feedback.created_at).toLocaleDateString(
+                        "id-ID",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
