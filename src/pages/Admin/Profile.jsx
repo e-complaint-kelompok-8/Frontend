@@ -14,14 +14,21 @@ import {
   Edit,
   Mail,
   Camera,
+  Eye,
+  Lock,
+  EyeOff,
   ChevronRight,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import useAuthStore from "@stores/useAuthStore";
+import AdminService from "@services/AdminService";
+import Swal from "sweetalert2";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActivePath = (path) => {
     if (path === "/") {
@@ -35,6 +42,28 @@ const Sidebar = ({ className, onClose }) => {
       return true;
     }
     return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Apakah Anda yakin?",
+        text: "Anda akan keluar dari aplikasi",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, Keluar!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        useAuthStore.getState().clearAuth();
+        navigate("/admin/login");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   return (
@@ -71,13 +100,13 @@ const Sidebar = ({ className, onClose }) => {
         ))}
       </nav>
       <div>
-        <a
-          href="#"
-          className="flex items-center space-x-2 text-white hover:text-indigo-200 py-2 px-2 rounded-lg hover:bg-indigo-600 transition-colors"
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-2 text-white hover:text-indigo-200 py-2 px-2 rounded-lg hover:bg-indigo-600 transition-colors w-full text-left"
         >
           <LogOut size={20} />
           <span className="text-sm md:text-base">Log-Out</span>
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -132,9 +161,30 @@ const Header = () => {
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [adminProfile, setAdminProfile] = useState({
+    email: "",
+    role: "",
+    photo: "",
+  });
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        const profile = await AdminService.getProfile();
+        setAdminProfile({
+          email: profile.email || "",
+          role: profile.role || "",
+          photo: profile.photo || "",
+        });
+      } catch (error) {
+        console.error("Error fetching admin profile:", error);
+      }
+    };
+    fetchAdminProfile();
+  }, []);
 
   // Mock data dengan nama pengirim
   const recentComplaints = [
@@ -158,7 +208,6 @@ const Header = () => {
     },
   ];
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -180,11 +229,51 @@ const Header = () => {
   }, []);
 
   const handleProfileClick = () => {
-    navigate("/edit-profile");
+    navigate("/admin/profile/");
+    setShowProfileDropdown(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Apakah Anda yakin?",
+        text: "Anda akan keluar dari aplikasi",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, Keluar!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        useAuthStore.getState().clearAuth();
+        navigate("/admin/login");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
+  const getDisplayName = () => {
+    if (!adminProfile.email) return "Admin";
+    return adminProfile.email.split("@")[0];
+  };
+
+  const getInitial = () => {
+    if (!adminProfile.email) return "A";
+    return adminProfile.email.charAt(0).toUpperCase();
+  };
+
+  const getRole = () => {
+    if (!adminProfile.role) return "";
+    return (
+      adminProfile.role.charAt(0).toUpperCase() + adminProfile.role.slice(1)
+    );
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-40 ">
+    <header className="bg-white shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Search Section */}
@@ -200,7 +289,7 @@ const Header = () => {
           </div>
 
           {/* Notification and Profile Section */}
-          <div className="flex items-center space-x-4 ">
+          <div className="flex items-center space-x-4">
             {/* Notification Dropdown */}
             <div className="relative mt-2" ref={notificationRef}>
               <button
@@ -216,16 +305,8 @@ const Header = () => {
               </button>
 
               {showNotificationDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-          w-[calc(100%-2rem)] md:w-96 
-          bg-white border-none rounded-lg shadow-2xl 
-          z-50
-          md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-          md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-          md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="p-4 bg-white rounded-lg shadow-lg">
+                <div className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 w-[calc(100%-2rem)] md:w-96 bg-white border-none rounded-lg shadow-2xl z-50">
+                  <div className="p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="text-sm font-semibold">
                         Komplain Terbaru
@@ -238,36 +319,21 @@ const Header = () => {
                           className="py-3 border-b last:border-b-0 flex items-center hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-200"
                         >
                           <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-                            {complaint.senderAvatar ? (
-                              <img
-                                src={complaint.senderAvatar}
-                                alt={complaint.sender}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-600 text-lg">
-                                {complaint.sender.charAt(0).toUpperCase()}
-                              </span>
-                            )}
+                            <span className="text-gray-600 text-lg">
+                              {complaint.sender.charAt(0)}
+                            </span>
                           </div>
                           <div className="ml-3 flex-grow">
                             <p className="text-sm font-medium text-gray-800">
                               {complaint.sender} Baru Saja Complaint
                             </p>
-                            <p className="text-xs text-gray-500 truncate max-w-48">
+                            <p className="text-xs text-gray-500 truncate">
                               {complaint.title}
                             </p>
                           </div>
                         </div>
                       ))}
                     </div>
-                    {recentComplaints.length > 0 && (
-                      <div className="mt-3 text-center">
-                        <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                          Lihat Semua Komplain
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -279,10 +345,24 @@ const Header = () => {
                 className="flex items-center space-x-2 cursor-pointer"
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               >
-                <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
+                  {adminProfile.photo ? (
+                    <img
+                      src={adminProfile.photo}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600">
+                      {getInitial()}
+                    </div>
+                  )}
+                </div>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium">Halo ! Adam</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
+                  <p className="text-sm font-medium">
+                    Halo! {getDisplayName()}
+                  </p>
+                  <p className="text-xs text-gray-500">{getRole()}</p>
                 </div>
                 <ChevronRight
                   size={20}
@@ -293,24 +373,19 @@ const Header = () => {
               </div>
 
               {showProfileDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-                w-[calc(50%-2rem)] md:w-48 
-                bg-white border-none rounded-lg shadow-2xl 
-                z-50
-                md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-                md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-                md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="py-1 bg-white rounded-lg shadow-lg">
+                <div className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 w-[calc(50%-2rem)] md:w-48 bg-white rounded-lg shadow-2xl z-50">
+                  <div className="py-1">
                     <button
                       onClick={handleProfileClick}
                       className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2"
                     >
-                      <Edit className="h-5 w-5 text-gray-500" />
-                      <span>Edit Profil</span>
+                      <Settings className="h-5 w-5 text-gray-500" />
+                      <span>Profil</span>
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2"
+                    >
                       <LogOut className="h-5 w-5 text-red-600" />
                       <span>Log Out</span>
                     </button>
@@ -327,54 +402,129 @@ const Header = () => {
 
 const ProfileForm = () => {
   const [profileImage, setProfileImage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [initialValues, setInitialValues] = useState({
+    email: "",
+    role: "",
+    password: "",
+    photo_url: "",
+  });
   const fileInputRef = useRef(null);
 
-  // Validation schema using Yup with more detailed validation
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await AdminService.getProfile();
+        console.log(profile);
+        setProfileImage(profile.photo);
+
+        setInitialValues({
+          email: profile.email,
+          role: profile.role,
+          password: "",
+          photo_url: profile.photo,
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Gagal mengambil data profil",
+        });
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   const validationSchema = Yup.object().shape({
-    name: Yup.string()
-      .required("Nama wajib diisi")
-      .min(2, "Nama minimal 2 karakter")
-      .max(50, "Nama maksimal 50 karakter"),
     email: Yup.string()
-      .email("Format email tidak valid")
+      .email("Email tidak valid")
       .required("Email wajib diisi"),
+    role: Yup.string().required("Role wajib diisi"),
+    password: Yup.string().min(6, "Password minimal 6 karakter").optional(), // Password bersifat opsional
+    photo: Yup.mixed()
+      .test("fileSize", "Ukuran file terlalu besar", (value) => {
+        if (!value || typeof value === "string") return true;
+        return value.size <= 5 * 1024 * 1024; // 5MB
+      })
+      .test("fileType", "Format file tidak valid", (value) => {
+        if (!value || typeof value === "string") return true;
+        return ["image/jpeg", "image/png", "image/gif"].includes(value.type);
+      }),
   });
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
+  const handleSubmit = async (values, { setSubmitting }) => {
+    try {
+      setSubmitting(true);
+
+      const updateData = {
+        email: values.email,
+        role: values.role,
       };
-      reader.readAsDataURL(file);
+
+      // Tambahkan password hanya jika diisi
+      if (values.password) {
+        updateData.password = values.password;
+      }
+
+      // Jika ada file gambar baru
+      if (values.photo instanceof File) {
+        updateData.new_image = values.photo;
+        updateData.old_photo_url = initialValues.photo_url;
+      }
+
+      const updatedProfile = await AdminService.updateProfile(updateData);
+
+      // Update local storage atau state global jika perlu
+      useAuthStore.getState().setEmail(updatedProfile.email);
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Profil berhasil diperbarui",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Gagal memperbarui profil",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleImageUpload = () => {
-    fileInputRef.current.click();
-  };
+  const handleImageChange = (e, setFieldValue) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ukuran file terlalu besar (maksimal 5MB)",
+        });
+        return;
+      }
 
-  const handleSubmit = (values, { setSubmitting }) => {
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Profile Updated:", {
-        ...values,
-        profileImage,
-      });
-      alert("Profil Berhasil Diperbarui!");
-      setSubmitting(false);
-    }, 400);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result);
+        setFieldValue("photo", file);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
     <div className="flex overflow-hidden justify-center items-center lg:mt-4 md:mt-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
         <Formik
-          initialValues={{
-            name: "Adam",
-            email: "adam@example.com",
-          }}
+          enableReinitialize
+          initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
@@ -404,9 +554,9 @@ const ProfileForm = () => {
                     )}
                     <button
                       type="button"
-                      onClick={handleImageUpload}
-                      className="absolute bottom-0 right-0 bg-gradient-to-r from-[#4338CA] to-[#6366F1] text-white rounded-full p-2 
-                      hover:from-[#3730A3] hover:to-[#4f46e5] 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 bg-gradient-to-r from-[#4338CA] to-[#6366F1] text-white rounded-full p-2
+                      hover:from-[#3730A3] hover:to-[#4f46e5]
                       transition-all duration-300 transform active:scale-95
                       shadow-md hover:shadow-lg"
                     >
@@ -415,48 +565,12 @@ const ProfileForm = () => {
                     <input
                       type="file"
                       ref={fileInputRef}
-                      onChange={(e) => {
-                        handleImageChange(e);
-                        setFieldValue("profileImage", e.target.files[0]);
-                      }}
+                      onChange={(e) => handleImageChange(e, setFieldValue)}
                       accept="image/*"
                       className="hidden"
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Nama Input */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Nama
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Field
-                    type="text"
-                    name="name"
-                    className={`
-                      pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
-                      ${
-                        errors.name && touched.name
-                          ? "border-red-500 focus:ring-red-500 bg-red-50"
-                          : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
-                      }
-                    `}
-                    placeholder="Masukkan nama Anda"
-                  />
-                </div>
-                <ErrorMessage
-                  name="name"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
               </div>
 
               {/* Email Input */}
@@ -474,14 +588,12 @@ const ProfileForm = () => {
                   <Field
                     type="email"
                     name="email"
-                    className={`
-                      pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
+                    className={`pl-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
                       ${
                         errors.email && touched.email
                           ? "border-red-500 focus:ring-red-500 bg-red-50"
                           : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
-                      }
-                    `}
+                      }`}
                     placeholder="Masukkan email Anda"
                   />
                 </div>
@@ -492,17 +604,67 @@ const ProfileForm = () => {
                 />
               </div>
 
+              {/* Password Input */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <Field
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className={`pl-10 pr-10 w-full rounded-lg border p-3 focus:outline-none focus:ring-2 transition-all duration-300
+                      ${
+                        errors.password && touched.password
+                          ? "border-red-500 focus:ring-red-500 bg-red-50"
+                          : "border-gray-300 focus:ring-[#4338CA] hover:border-[#4338CA]/50"
+                      }`}
+                    placeholder="Masukkan password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+                <ErrorMessage
+                  name="password"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
+
               {/* Update Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-[#4338CA] to-[#6366F1] text-white rounded-lg p-3 
-                hover:from-[#3730A3] hover:to-[#4f46e5] 
+                className={`w-full bg-gradient-to-r from-[#4338CA] to-[#6366F1] text-white rounded-lg p-3
+                hover:from-[#3730A3] hover:to-[#4f46e5]
                 transition-all duration-300 transform active:scale-95
                 disabled:opacity-50 disabled:cursor-not-allowed
-                shadow-md hover:shadow-lg"
+                shadow-md hover:shadow-lg
+                flex items-center justify-center`}
               >
-                {isSubmitting ? "Memperbarui..." : "Perbarui Profil"}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                    <span>Memperbarui...</span>
+                  </>
+                ) : (
+                  "Perbarui Profil"
+                )}
               </button>
             </Form>
           )}
