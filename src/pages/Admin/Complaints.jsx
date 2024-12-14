@@ -528,9 +528,9 @@ const ComplaintList = () => {
             <h1 className="text-xl font-bold text-gray-800">
               Daftar Pengaduan
             </h1>
-            <p className="text-sm text-gray-600">
+            {/* <p className="text-sm text-gray-600">
               Total {totalComplaints} pengaduan
-            </p>
+            </p> */}
           </div>
           <button
             onClick={handleImportCSV}
@@ -618,19 +618,47 @@ const ComplaintList = () => {
                     <h3 className="font-medium text-gray-900 text-sm md:text-base lg:text-lg">
                       {complaint.user?.name}
                     </h3>
-                    <p className="text-xs md:text-sm lg:text-base text-gray-600">
+                    <p className="block md:hidden text-xs text-gray-600">
                       {complaint.complaint_number}
                     </p>
+                    <div className="hidden md:flex items-center space-x-2">
+                      <p className="text-sm lg:text-base text-gray-600">
+                        {complaint.complaint_number}
+                      </p>
+                      <span className="text-sm lg:text-base text-gray-500">
+                        {new Date(complaint.created_at).toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${getStatusColor(
+                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium block md:hidden ${getStatusColor(
                     complaint.status
                   )}`}
                 >
                   {complaint.status.charAt(0).toUpperCase() +
                     complaint.status.slice(1)}
                 </span>
+                <div className="hidden md:flex items-center space-x-2">
+                  <span className="text-sm lg:text-base text-gray-500">
+                    {complaint.category?.name}
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                      complaint.status
+                    )}`}
+                  >
+                    {complaint.status.charAt(0).toUpperCase() +
+                      complaint.status.slice(1)}
+                  </span>
+                </div>
               </div>
               <div className="mt-4">
                 <h4 className="font-medium text-gray-900 text-sm md:text-base lg:text-lg">
@@ -640,7 +668,7 @@ const ComplaintList = () => {
                   {complaint.description}
                 </p>
               </div>
-              <div className="mt-4 flex items-center justify-between text-xs md:text-sm lg:text-base text-gray-500">
+              <div className="mt-4  md:hidden flex items-center justify-between text-xs text-gray-500">
                 <span>{complaint.category?.name}</span>
                 <span>
                   {new Date(complaint.created_at).toLocaleDateString("en-GB", {
