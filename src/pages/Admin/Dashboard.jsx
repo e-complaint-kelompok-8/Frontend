@@ -22,6 +22,19 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import DashboardService from "@services/DashboardService";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 const Sidebar = ({ className, onClose }) => {
   const location = useLocation();
@@ -331,6 +344,44 @@ const Header = () => {
     </header>
   );
 };
+// RecentComplaints Component
+// const RecentComplaints = () => (
+//   <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
+//     <h2 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">
+//       Recent Complaint
+//     </h2>
+//     <div className="space-y-3 md:space-y-4">
+//       {[
+//         {
+//           name: "Francisco Gibbs",
+//           complaint: "Kebakaran hutan",
+//           time: "Just now",
+//         },
+//         {
+//           name: "Adam Kurniawan",
+//           complaint: "Banjir",
+//           time: "Friday 12:26PM",
+//         },
+//       ].map((item, index) => (
+//         <div
+//           key={index}
+//           className="flex items-center space-x-3 md:space-x-4 p-2 hover:bg-gray-50 rounded-lg"
+//         >
+//           <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-300 rounded-full flex-shrink-0"></div>
+//           <div className="min-w-0 flex-1">
+//             <p className="text-xs md:text-sm lg:text-base font-medium truncate">
+//               {item.name}
+//             </p>
+//             <p className="text-xs md:text-sm text-gray-500 truncate">
+//               Created Complaint {item.complaint}
+//             </p>
+//             <p className="text-[10px] md:text-xs text-gray-400">{item.time}</p>
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// );
 const MetricCard = ({ title, value }) => (
   <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
     <h3 className="text-xs md:text-sm lg:text-base font-medium text-gray-500">
@@ -340,95 +391,199 @@ const MetricCard = ({ title, value }) => (
   </div>
 );
 
-// RecentComplaints Component
-const RecentComplaints = () => (
-  <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-    <h2 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">
-      Recent Complaint
-    </h2>
-    <div className="space-y-3 md:space-y-4">
-      {[
-        {
-          name: "Francisco Gibbs",
-          complaint: "Kebakaran hutan",
-          time: "Just now",
-        },
-        {
-          name: "Adam Kurniawan",
-          complaint: "Banjir",
-          time: "Friday 12:26PM",
-        },
-      ].map((item, index) => (
-        <div
-          key={index}
-          className="flex items-center space-x-3 md:space-x-4 p-2 hover:bg-gray-50 rounded-lg"
-        >
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-300 rounded-full flex-shrink-0"></div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs md:text-sm lg:text-base font-medium truncate">
-              {item.name}
-            </p>
-            <p className="text-xs md:text-sm text-gray-500 truncate">
-              Created Complaint {item.complaint}
-            </p>
-            <p className="text-[10px] md:text-xs text-gray-400">{item.time}</p>
-          </div>
-        </div>
-      ))}
+// RecentUsers Component
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "proses":
+      return "bg-yellow-100 text-yellow-800";
+    case "selesai":
+      return "bg-green-100 text-green-800";
+    case "batal":
+      return "bg-red-100 text-red-800";
+    case "tanggapi":
+      return "bg-blue-100 text-blue-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const RecentComplaint = ({ complaints }) => {
+  // Urutkan keluhan berdasarkan tanggal dan ambil 3 terbaru
+  const recentComplaints = [...complaints]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 3);
+
+  return (
+    <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
+      <h2 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">
+        Recent Complaint
+      </h2>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px]">
+          <thead>
+            <tr className="text-left text-[10px] md:text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="pb-2 px-2">No Complaint</th>
+              <th className="pb-2 px-2">Date Created</th>
+              <th className="pb-2 px-2">Client</th>
+              <th className="pb-2 px-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentComplaints.map((complaint, index) => (
+              <tr key={index} className="border-t hover:bg-gray-50">
+                <td className="py-2 px-2 text-xs md:text-sm">
+                  {complaint.complaint_number}
+                </td>
+                <td className="py-2 px-2 text-xs md:text-sm">
+                  {complaint.created_at}
+                </td>
+                <td className="py-2 px-2 text-xs md:text-sm">
+                  {complaint.user.name}
+                </td>
+                <td className="py-2 px-2">
+                  <span
+                    className={`px-2 inline-flex text-[10px] md:text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                      complaint.status
+                    )}`}
+                  >
+                    {complaint.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  );
+};
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
 );
 
-// RecentUsers Component
-const RecentUsers = () => (
-  <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-    <h2 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">
-      Recent User
-    </h2>
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[500px]">
-        <thead>
-          <tr className="text-left text-[10px] md:text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">
-            <th className="pb-2 px-2">No Complaint</th>
-            <th className="pb-2 px-2">Date Created</th>
-            <th className="pb-2 px-2">Client</th>
-            <th className="pb-2 px-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {[1, 2, 3].map((_, index) => (
-            <tr key={index} className="border-t hover:bg-gray-50">
-              <td className="py-2 px-2 text-xs md:text-sm">ZR-22222</td>
-              <td className="py-2 px-2 text-xs md:text-sm">3 Jul, 2020</td>
-              <td className="py-2 px-2 text-xs md:text-sm">Adam kurniawan</td>
-              <td className="py-2 px-2">
-                <span className="px-2 inline-flex text-[10px] md:text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  PAID
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+const ComplaintChart = ({ complaints }) => {
+  // Filter complaints by status
+  const completedCount = complaints.filter(
+    (c) => c.status.toLowerCase() === "selesai"
+  ).length;
+  const canceledCount = complaints.filter(
+    (c) => c.status.toLowerCase() === "batal"
+  ).length;
+  const pendingCount = complaints.filter(
+    (c) => c.status.toLowerCase() === "proses"
+  ).length;
+  const respondedCount = complaints.filter(
+    (c) => c.status.toLowerCase() === "tanggapi"
+  ).length;
+
+  // Chart data
+  const data = {
+    labels: ["Selesai", "Batal", "Proses", "Tanggapi"],
+    datasets: [
+      {
+        label: "", // Hapus atau kosongkan jika tidak ingin label ini muncul
+        data: [completedCount, canceledCount, pendingCount, respondedCount],
+        backgroundColor: ["#4caf50", "#f44336", "#ff9800", "#2196f3"],
+        borderColor: ["#4caf50", "#f44336", "#ff9800", "#2196f3"],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Chart options
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // Nonaktifkan legend
+      },
+      // title: {
+      //   display: true,
+      //   text: "Distribusi Status Keluhan",
+      //   color: "#000", // Title text color
+      //   font: {
+      //     size: 18,
+      //   },
+      // },
+      datalabels: {
+        color: "#000", // Data label color
+        anchor: "end",
+        align: "top",
+        formatter: (value) => value, // Show data value
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          color: "#000", // X-axis tick color
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          color: "#000", // Y-axis tick color
+        },
+      },
+    },
+    animation: {
+      duration: 1000,
+      easing: "easeInOutQuart", // Smooth animation
+    },
+  };
+
+  return (
+    <div style={{ position: "relative", height: "400px", width: "100%" }}>
+      <Bar data={data} options={options} />
     </div>
-  </div>
-);
-const Chart = () => (
-  <div className="h-[200px] md:h-[300px] mt-4">
-    <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
-      Chart Placeholder
-    </div>
-  </div>
-);
+  );
+};
 
 export default function Dashboard() {
-  const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [complaints, setComplaints] = useState([]);
+  const [news, setNews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const complaintsData = await DashboardService.getComplaints(
+          "ALL",
+          "ALL"
+        );
+        console.log(complaintsData);
+        setComplaints(complaintsData.data.complaints);
+
+        const newsData = await DashboardService.getAllNews();
+        setNews(newsData.news);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Menghitung jumlah keluhan yang selesai dan batal
+  const completedComplaints = complaints.filter(
+    (complaint) => complaint.status.toLowerCase() === "selesai"
+  ).length;
+  const canceledComplaints = complaints.filter(
+    (complaint) => complaint.status.toLowerCase() === "batal"
+  ).length;
 
   return (
     <div className="flex h-screen bg-gray-100 pb-16 md:pb-16 lg:pb-0">
-      {/* Persistent Sidebar for Large Screens */}
       <Sidebar className="hidden lg:block w-64 fixed h-full" />
 
       <div className="flex-1 flex flex-col lg:ml-64">
@@ -437,27 +592,28 @@ export default function Dashboard() {
         <main className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto py-4 md:py-6 px-3 md:px-4 lg:px-8 space-y-4 md:space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-              <MetricCard title="Complaint Masuk" value={20} />
-              <MetricCard title="Feedback Selesai" value={20} />
-              <MetricCard title="Category Complaint" value={20} />
-              <MetricCard title="Import CSV" value={20} />
+              <MetricCard title="Total Complaint" value={complaints.length} />
+              <MetricCard
+                title="Complaint Selesai"
+                value={completedComplaints}
+              />
+              <MetricCard title="Complaint Batal" value={canceledComplaints} />
+              <MetricCard title="Total News" value={news.length} />
             </div>
 
             <div className="bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-md transition-shadow">
               <h2 className="text-base md:text-lg lg:text-xl font-semibold mb-3 md:mb-4">
                 Complaint Grafik
               </h2>
-              <Chart />
+              <ComplaintChart complaints={complaints} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              <RecentComplaints />
-              <RecentUsers />
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 md:gap-6">
+              <RecentComplaint complaints={complaints} />
             </div>
           </div>
         </main>
 
-        {/* Bottom Navigation for Mobile and Tablet */}
         <BottomNavigation />
       </div>
     </div>
