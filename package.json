@@ -12,8 +12,12 @@
   "dependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.7.7",
+
+    "crypto-js": "^4.2.0",
+
     "chart.js": "^4.4.7",
     "chartjs-plugin-datalabels": "^2.2.0",
+
     "formik": "^2.4.6",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.462.0",
