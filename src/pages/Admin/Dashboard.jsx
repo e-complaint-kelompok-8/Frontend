@@ -36,7 +36,7 @@ const Dashboard = () => {
     <div className="flex h-screen bg-gray-100 pb-16 md:pb-16 lg:pb-0">
       <Sidebar
         className="hidden lg:block w-64 fixed h-full"
-        isLoading={isLoading}
+        // isLoading={isLoading}
       />
 
       <div className="flex-1 flex flex-col lg:ml-64">
@@ -46,7 +46,9 @@ const Dashboard = () => {
           news={news}
           isLoading={isLoading}
         />
-        <BottomNavigation isLoading={isLoading} />
+        <BottomNavigation
+        // isLoading={isLoading}
+        />
       </div>
     </div>
   );

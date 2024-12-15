@@ -49,7 +49,8 @@ const HeaderSkeleton = () => (
   </header>
 );
 
-const Header = ({ isLoading }) => {
+const Header = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -84,6 +85,7 @@ const Header = ({ isLoading }) => {
 
   useEffect(() => {
     const fetchAdminProfile = async () => {
+      setIsLoading(true);
       try {
         const profile = await AdminService.getProfile();
         setAdminProfile({
@@ -93,6 +95,8 @@ const Header = ({ isLoading }) => {
         });
       } catch (error) {
         console.error("Error fetching admin profile:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchAdminProfile();
