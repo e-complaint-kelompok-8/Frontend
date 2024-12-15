@@ -24,11 +24,24 @@ const Sidebar = ({ className, onClose, isLoading }) => {
   ];
 
   const isActivePath = (path) => {
-    if (path === "/") return location.pathname === path;
-    if (path === "/users") return location.pathname.startsWith("/user");
-    if (path === "/public-services" && location.pathname.startsWith("/news"))
-      return true;
-    return location.pathname.startsWith(path);
+    const { pathname } = location;
+
+    // Define active routes with patterns
+    const activeRoutes = {
+      "/admin/complaints": ["/admin/complaints", "/admin/complaint"],
+      "/admin/public-services": ["/admin/public-services", "/admin/news"],
+      "/admin/users": ["/admin/users", "/admin/user"],
+    };
+
+    // Check if pathname matches any pattern in activeRoutes
+    for (const [key, routes] of Object.entries(activeRoutes)) {
+      if (routes.some((route) => pathname.startsWith(route))) {
+        return path === key;
+      }
+    }
+
+    // Default check for exact match
+    return pathname === path;
   };
 
   // Skeleton Loading Component
