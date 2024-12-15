@@ -134,6 +134,37 @@ const NewsService = {
       throw error;
     }
   },
+
+  getComments: async (newsId) => {
+    try {
+      const response = await axiosInstance.get(`/comment/${newsId}`);
+      console.log("respon be", response);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getCommentsByIdNews: async (newsId) => {
+    try {
+      const response = await axiosInstance.get(`/news/${newsId}/comment`);
+      console.log("respon be", response);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteComments: async (commentIds) => {
+    try {
+      const response = await axiosInstance.delete("/comment", {
+        data: commentIds,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default NewsService;

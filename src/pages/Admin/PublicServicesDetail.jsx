@@ -339,6 +339,10 @@ const News = () => {
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [newsImage, setNewsImage] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [comments, setComments] = useState([]);
+  const [selectedComments, setSelectedComments] = useState([]);
+
   const [newsData, setNewsData] = useState({
     title: "",
     content: "",
@@ -357,6 +361,7 @@ const News = () => {
       .min(20, "Konten minimal 20 karakter")
       .required("Konten wajib diisi"),
   });
+
   const fetchNewsDetail = async () => {
     try {
       setLoading(true);
@@ -405,8 +410,53 @@ const News = () => {
   useEffect(() => {
     if (id) {
       fetchNewsDetail();
+      fetchComments(); // Fetch comments when the component mounts
     }
   }, [id]);
+
+  const fetchComments = async () => {
+    try {
+      const response = await NewsService.getCommentsByIdNews(id);
+      setComments(response.comments || []);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Gagal mengambil komentar",
+      });
+    }
+  };
+
+  const handleDeleteComments = async () => {
+    try {
+      await NewsService.deleteComments(selectedComments);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Komentar berhasil dihapus",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      setSelectedComments([]);
+      fetchComments(); // Refresh comments after deletion
+    } catch (error) {
+      console.error("Error deleting comments:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Gagal menghapus komentar",
+      });
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedComments.length === comments.length) {
+      setSelectedComments([]);
+    } else {
+      setSelectedComments(comments.map((comment) => comment.id));
+    }
+  };
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -420,12 +470,9 @@ const News = () => {
       reader.readAsDataURL(file);
     }
   };
+
   const handleGoBack = () => {
     navigate(-1);
-  };
-
-  const handleDeleteComment = (index) => {
-    // Implementasi delete comment
   };
 
   if (loading) {
@@ -677,28 +724,63 @@ const News = () => {
 
         {isCommentsExpanded && (
           <div className="space-y-3 mt-4">
-            {commenters.map((commenter, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="bg-gray-300 w-8 h-8 sm:w-10 sm:h-10 rounded-full"></div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm md:text-base">
-                    {commenter.name}
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-                    {commenter.comment}
-                  </p>
+            {comments.length > 0 && (
+              <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg mb-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedComments.length === comments.length}
+                    onChange={handleSelectAll}
+                    className="mr-2"
+                  />
+                  <span className="text-blue-600 font-semibold text-xs sm:text-sm md:text-base">
+                    {selectedComments.length} komentar dipilih
+                  </span>
                 </div>
                 <button
-                  onClick={() => handleDeleteComment(index)}
-                  className="text-red-500 hover:text-red-600"
+                  onClick={handleDeleteComments}
+                  className="flex items-center text-red-500 hover:text-red-600 text-xs sm:text-sm md:text-base"
                 >
-                  <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 mr-4" />
+                  <Trash2 className="mr-1" />
+                  Hapus Terpilih
                 </button>
               </div>
-            ))}
+            )}
+            {comments.length > 0 ? (
+              comments.map((comment, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedComments.includes(comment.id)}
+                    onChange={() => {
+                      if (selectedComments.includes(comment.id)) {
+                        setSelectedComments(
+                          selectedComments.filter((id) => id !== comment.id)
+                        );
+                      } else {
+                        setSelectedComments([...selectedComments, comment.id]);
+                      }
+                    }}
+                  />
+                  <div className="bg-gray-300 w-8 h-8 sm:w-10 sm:h-10 rounded-full"></div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 text-xs sm:text-sm md:text-base">
+                      {comment.user.name}
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-base">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-xs sm:text-sm md:text-base">
+                Tidak ada komentar
+              </p>
+            )}
           </div>
         )}
       </div>
