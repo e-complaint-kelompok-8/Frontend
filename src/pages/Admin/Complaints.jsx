@@ -15,6 +15,7 @@ import {
   Edit,
   ChevronRight,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useLocation, Link, useNavigate } from "react-router-dom";
@@ -408,6 +409,7 @@ const ComplaintList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalComplaints, setTotalComplaints] = useState(0);
+  const [selectedComplaints, setSelectedComplaints] = useState([]);
 
   const complaintStatuses = [
     { value: "ALL", label: "Semua Status" },
@@ -421,7 +423,6 @@ const ComplaintList = () => {
     const fetchCategories = async () => {
       try {
         const response = await CategoryService.getCategories();
-        console.log(response);
         const fetchedCategories = response || [];
         setCategories([
           { id: "ALL", name: "Semua Kategori" },
@@ -506,8 +507,49 @@ const ComplaintList = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+  };
+
+  const handleSelectComplaint = (id) => {
+    if (selectedComplaints.includes(id)) {
+      setSelectedComplaints(
+        selectedComplaints.filter((complaintId) => complaintId !== id)
+      );
+    } else {
+      setSelectedComplaints([...selectedComplaints, id]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedComplaints.length === complaints.length) {
+      setSelectedComplaints([]);
+    } else {
+      setSelectedComplaints(complaints.map((complaint) => complaint.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await ComplaintService.bulkDelete(selectedComplaints);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Pengaduan berhasil dihapus",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      setSelectedComplaints([]);
+      fetchComplaints(); // Refresh complaints after deletion
+    } catch (error) {
+      console.error("Error deleting complaints:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Gagal menghapus pengaduan",
+      });
+    }
   };
 
   const LoadingSpinner = () => (
@@ -528,9 +570,6 @@ const ComplaintList = () => {
             <h1 className="text-xl font-bold text-gray-800">
               Daftar Pengaduan
             </h1>
-            {/* <p className="text-sm text-gray-600">
-              Total {totalComplaints} pengaduan
-            </p> */}
           </div>
           <button
             onClick={handleImportCSV}
@@ -542,7 +581,7 @@ const ComplaintList = () => {
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-row  gap-4">
+        <div className="flex flex-row gap-4">
           <div className="relative flex-1">
             <select
               value={selectedCategory}
@@ -564,7 +603,7 @@ const ComplaintList = () => {
           <div className="relative flex-1">
             <select
               value={selectedStatus}
-              onChange={handleStatusChange} // Gunakan handler baru
+              onChange={handleStatusChange}
               className="appearance-none w-full px-3 md:px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 text-sm md:text-base text-gray-700"
             >
               {complaintStatuses.map((status) => (
@@ -581,63 +620,92 @@ const ComplaintList = () => {
         </div>
       </div>
 
+      {/* Bulk Delete Button */}
+      {selectedComplaints.length > 0 && (
+        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg mb-3">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={selectedComplaints.length === complaints.length}
+              onChange={handleSelectAll}
+              className="mr-2"
+            />
+            <span className="text-blue-600 font-semibold text-xs sm:text-sm md:text-base">
+              {selectedComplaints.length} pengaduan dipilih
+            </span>
+          </div>
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center text-red-500 hover:text-red-600 text-xs sm:text-sm md:text-base"
+          >
+            <Trash2 className="mr-1" />
+            Hapus Terpilih
+          </button>
+        </div>
+      )}
+
       {/* Content Section */}
       {loading ? (
         <LoadingSpinner />
       ) : complaints.length === 0 ? (
-        <EmptyState
-          selectedCategory={selectedCategory}
-          selectedStatus={selectedStatus}
-          categories={categories} // Kirim categories dari state
-          complaintStatuses={complaintStatuses}
-        />
+        <p className="text-gray-500 text-center">Tidak ada pengaduan</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1">
           {complaints.map((complaint) => (
-            <Link
+            <div
               key={complaint.id}
-              to={`/admin/complaint/${complaint.id}`}
               className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden">
-                    {complaint.user?.photo_url ? (
-                      <img
-                        src={complaint.user.photo_url}
-                        alt={complaint.user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-semibold">
-                        {complaint.user?.name?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 text-sm md:text-base lg:text-lg">
-                      {complaint.user?.name}
-                    </h3>
-                    <p className="block md:hidden text-xs text-gray-600">
-                      {complaint.complaint_number}
-                    </p>
-                    <div className="hidden md:flex items-center space-x-2">
-                      <p className="text-sm lg:text-base text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={selectedComplaints.includes(complaint.id)}
+                  onChange={() => handleSelectComplaint(complaint.id)}
+                  className="mr-2"
+                />
+                <Link
+                  to={`/admin/complaint/${complaint.id}`}
+                  className="flex-1"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden">
+                      {complaint.user?.photo_url ? (
+                        <img
+                          src={complaint.user.photo_url}
+                          alt={complaint.user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-semibold">
+                          {complaint.user?.name?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 text-sm md:text-base lg:text-lg">
+                        {complaint.user?.name}
+                      </h3>
+                      <p className="block md:hidden text-xs text-gray-600">
                         {complaint.complaint_number}
                       </p>
-                      <span className="text-sm lg:text-base text-gray-500">
-                        {new Date(complaint.created_at).toLocaleDateString(
-                          "en-GB",
-                          {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          }
-                        )}
-                      </span>
+                      <div className="hidden md:flex items-center space-x-2">
+                        <p className="text-sm lg:text-base text-gray-600">
+                          {complaint.complaint_number}
+                        </p>
+                        <span className="text-sm lg:text-base text-gray-500">
+                          {new Date(complaint.created_at).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
                 <span
                   className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium block md:hidden ${getStatusColor(
                     complaint.status
@@ -668,7 +736,7 @@ const ComplaintList = () => {
                   {complaint.description}
                 </p>
               </div>
-              <div className="mt-4  md:hidden flex items-center justify-between text-xs text-gray-500">
+              <div className="mt-4 md:hidden flex items-center justify-between text-xs text-gray-500">
                 <span>{complaint.category?.name}</span>
                 <span>
                   {new Date(complaint.created_at).toLocaleDateString("en-GB", {
@@ -678,7 +746,7 @@ const ComplaintList = () => {
                   })}
                 </span>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
@@ -747,7 +815,6 @@ const ComplaintList = () => {
     </div>
   );
 };
-
 //
 
 export default function Complaints() {

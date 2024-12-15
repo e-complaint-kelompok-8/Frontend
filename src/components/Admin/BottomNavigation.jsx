@@ -7,7 +7,7 @@ const BottomNavigation = () => {
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
     { icon: Users, label: "Services", path: "/admin/public-services" },
     { icon: User, label: "Users", path: "/admin/users" },
   ];

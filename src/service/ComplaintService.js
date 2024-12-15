@@ -13,7 +13,7 @@ const ComplaintService = {
       if (status && status !== "ALL") {
         params.append("status", status.toLowerCase());
       }
-      
+
       params.append("page", page);
       params.append("limit", limit);
 
@@ -104,12 +104,16 @@ const ComplaintService = {
   },
 
   // Menghapus complaint
-  deleteComplaint: async (id) => {
+  bulkDelete: async (complaintIds) => {
+    console.log("id", complaintIds);
     try {
-      const response = await axiosInstance.delete(`/complaint/${id}`);
-      return response.data;
+      const response = await axiosInstance.delete("/complaint/bulk-delete", {
+        data: complaintIds,
+      });
+      return response;
     } catch (error) {
-      throw error;
+      console.error("Error occurred during bulk delete:", error);
+      throw error; // Re-throw the error if you want it to propagate
     }
   },
 };

@@ -7,7 +7,7 @@ const Sidebar = ({ className, onClose }) => {
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaint" },
+    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
     { icon: Users, label: "Public Services", path: "/admin/public-services" },
     { icon: Users, label: "Users", path: "/admin/users" },
   ];
