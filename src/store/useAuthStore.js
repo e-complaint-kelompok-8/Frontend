@@ -14,7 +14,20 @@ const useAuthStore = create(
         if (token) {
           try {
             const decoded = jwtDecode(token);
-            return decoded.user_id; // Pastikan `user_id` sesuai dengan nama properti di payload JWT Anda
+            return decoded.user_id;
+          } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
+          }
+        }
+        return null;
+      },
+      getAdminIdFromToken: () => {
+        const token = get().token;
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            return decoded.admin_id;
           } catch (error) {
             console.error("Invalid token:", error);
             return null;
