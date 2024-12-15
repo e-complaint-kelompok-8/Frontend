@@ -1254,40 +1254,6 @@ const PublicNews = () => {
   );
 };
 
-const Pagination = () => (
-  <div className="flex items-center justify-center gap-2 mt-6">
-    <button className="hidden md:inline px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-      « Previous
-    </button>
-    <button className="md:hidden px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-      «
-    </button>
-
-    {[1, 2, 3].map((page) => (
-      <button
-        key={page}
-        className={`px-3 py-1 rounded ${
-          page === 1
-            ? "bg-[#4338CA] text-white"
-            : "text-gray-600 hover:text-gray-900"
-        }`}
-      >
-        {page}
-      </button>
-    ))}
-    <span className="px-2">...</span>
-    <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-      10
-    </button>
-    <button className="md:hidden px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-      »
-    </button>
-    <button className="hidden md:inline px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-      Next »
-    </button>
-  </div>
-);
-
 export default function PublicServices() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

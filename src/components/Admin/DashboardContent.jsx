@@ -140,33 +140,7 @@ const ComplaintChart = ({ complaints }) => {
   );
 };
 
-const DashboardContent = () => {
-  const [complaints, setComplaints] = useState([]);
-  const [news, setNews] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const complaintsData = await DashboardService.getComplaints(
-          "ALL",
-          "ALL"
-        );
-        setComplaints(complaintsData.data.complaints);
-
-        const newsData = await DashboardService.getAllNews();
-        setNews(newsData.news);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+const DashboardContent = ({ complaints, news, isLoading }) => {
   const completedComplaints = complaints.filter(
     (complaint) => complaint.status.toLowerCase() === "selesai"
   ).length;
@@ -177,7 +151,7 @@ const DashboardContent = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <p>Loading...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
