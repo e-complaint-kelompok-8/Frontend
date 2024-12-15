@@ -1,335 +1,118 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  MessageSquare,
-  PieChart,
   Search,
-  Users,
-  User,
   X,
   Plus,
   Calendar,
   FileImage,
   Pencil,
-  AlignLeft,
   Trash2,
-  Edit,
-  ChevronRight,
 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+
 import NewsService from "@services/NewsService";
 import CategoryService from "@services/CategoryService";
 import useAuthStore from "@stores/useAuthStore";
 
-const Sidebar = ({ className, onClose }) => {
-  const location = useLocation();
+import Sidebar from "@components/Admin/Sidebar";
+import Header from "@components/Admin/Header";
+import BottomNavigation from "@components/Admin/BottomNavigation";
 
-  const isActivePath = (path) => {
-    switch (path) {
-      case "/admin/complaints":
-        return location.pathname.startsWith("/admin/complaint");
-      case "/admin/public-services":
-        location.pathname.startsWith("/admin/news");
-      default:
-        return location.pathname === path;
-    }
-  };
+const PublicServiceSkeleton = () => {
   return (
-    <div
-      className={`bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-500 text-white p-4 md:p-6 space-y-6 h-full flex flex-col ${className} transition-colors duration-300`}
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-2xl font-bold">Laporin</h1>
-        {onClose && (
-          <button onClick={onClose} className="md:hidden">
-            <X size={24} />
-          </button>
-        )}
+    <div className="w-full">
+      {/* Header */}
+      <div className="hidden md:grid md:grid-cols-[40px_100px_1fr_150px_150px_100px] gap-4 px-4 py-3 border-b">
+        <div className="h-5 bg-gray-200 rounded animate-pulse w-5"></div>
+        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
       </div>
-      <nav className="space-y-4 flex-grow">
-        {[
-          { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-          {
-            icon: MessageSquare,
-            label: "Complaint",
-            path: "/admin/complaints",
-          },
-          {
-            icon: Users,
-            label: "Public Services",
-            path: "/admin/public-services",
-          },
-          { icon: Users, label: "Users", path: "/admin/users" },
-        ].map(({ icon: Icon, label, path }) => (
-          <Link
-            key={label}
-            to={path}
-            className={`flex items-center space-x-2 py-2 px-2 rounded-lg transition-colors duration-300 ${
-              isActivePath(path)
-                ? "bg-white text-indigo-700"
-                : "text-white hover:bg-indigo-500/95 hover:text-white"
-            }`}
+
+      {/* Skeleton Rows for Desktop */}
+      <div className="hidden md:block">
+        {[...Array(5)].map((_, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-[40px_1fr] md:grid-cols-[40px_100px_1fr_150px_150px_100px] gap-4 items-center px-4 py-4 border-b hover:bg-gray-50"
           >
-            <Icon size={20} />
-            <span className="text-sm md:text-base">{label}</span>
-          </Link>
-        ))}
-      </nav>
-      <div>
-        <a
-          href="#"
-          className="flex items-center space-x-2 text-white hover:bg-indigo-500/70 hover:text-white py-2 px-2 rounded-lg transition-colors duration-300"
-        >
-          <LogOut size={20} />
-          <span className="text-sm md:text-base">Log-Out</span>
-        </a>
-      </div>
-    </div>
-  );
-};
+            {/* Checkbox */}
+            <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
 
-const BottomNavigation = () => {
-  const location = useLocation();
+            {/* Image - Hidden on mobile */}
+            <div className="hidden md:block">
+              <div className="w-[80px] h-[80px] bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
 
-  const isActivePath = (path) => {
-    switch (path) {
-      case "/admin/complaints":
-        return location.pathname.startsWith("/admin/complaint");
-      case "/admin/public-services":
-        location.pathname.startsWith("/admin/news");
-      default:
-        return location.pathname === path;
-    }
-  };
+            {/* Content - Takes full width on mobile */}
+            <div className="space-y-2">
+              {/* Image - Shown only on mobile */}
+              <div className="md:hidden w-[80px] h-[80px] bg-gray-200 rounded-lg animate-pulse mb-3"></div>
 
-  const navItems = [
-    { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
-    { icon: Users, label: "Services", path: "/admin/public-services" },
-    { icon: User, label: "Users", path: "/admin/users" },
-  ];
+              {/* Title and Description */}
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+            </div>
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg md:block lg:hidden">
-      <div className="flex justify-around py-2">
-        {navItems.map(({ icon: Icon, label, path }) => (
-          <Link
-            key={label}
-            to={path}
-            className={`flex flex-col items-center py-1 px-2 rounded-lg ${
-              isActivePath(path)
-                ? "text-indigo-700"
-                : "text-gray-500 hover:text-indigo-700"
-            }`}
-          >
-            <Icon size={20} />
-            <span className="text-xs mt-1">{label}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
+            {/* Category - Hidden on mobile */}
+            <div className="hidden md:block">
+              <div className="h-8 w-24 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
 
-const Header = () => {
-  const [showNotificationDropdown, setShowNotificationDropdown] =
-    useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const notificationRef = useRef(null);
-  const profileRef = useRef(null);
-  const navigate = useNavigate();
+            {/* Date - Hidden on mobile */}
+            <div className="hidden md:block">
+              <div className="h-5 bg-gray-200 rounded animate-pulse w-20"></div>
+            </div>
 
-  // Mock data dengan nama pengirim
-  const recentComplaints = [
-    {
-      id: 1,
-      sender: "John Doe",
-      title: "Jalanan Bolong",
-      status: "Belum Ditangani",
-    },
-    {
-      id: 2,
-      sender: "Jane Smith",
-      title: "Macet Di Tol Cikupa",
-      status: "Belum Ditangani",
-    },
-    {
-      id: 3,
-      sender: "Alex Johnson",
-      title: "Keluhan Produk",
-      status: "Belum Ditangani",
-    },
-  ];
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target)
-      ) {
-        setShowNotificationDropdown(false);
-      }
-
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setShowProfileDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleProfileClick = () => {
-    navigate("/edit-profile");
-  };
-
-  return (
-    <header className="bg-white shadow-sm sticky top-0 z-40 ">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Search Section */}
-          <div className="flex items-center flex-1">
-            <div className={`flex items-center w-full max-w-md relative`}>
-              <Search className="absolute left-3 h-5 w-5 text-gray-400 pointer-events-none" />
-              <input
-                type="search"
-                placeholder="Cari Disini"
-                className="w-full pl-10 pr-4 py-2 mr-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+            {/* Actions - Hidden on mobile */}
+            <div className="hidden md:flex space-x-2">
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Notification and Profile Section */}
-          <div className="flex items-center space-x-4 ">
-            {/* Notification Dropdown */}
-            <div className="relative mt-2" ref={notificationRef}>
-              <button
-                className="relative"
-                onClick={() =>
-                  setShowNotificationDropdown(!showNotificationDropdown)
-                }
-              >
-                <Bell className="h-6 w-6 text-gray-400" />
-                {recentComplaints.length > 0 && (
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 transform translate-x-1/2 -translate-y-1/2"></span>
-                )}
-              </button>
+      {/* Skeleton Cards for Mobile */}
+      <div className="md:hidden">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="bg-white rounded-lg overflow-hidden mb-4">
+            {/* Image Skeleton */}
+            <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
 
-              {showNotificationDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-          w-[calc(100%-2rem)] md:w-96 
-          bg-white border-none rounded-lg shadow-2xl 
-          z-50
-          md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-          md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-          md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="p-4 bg-white rounded-lg shadow-lg">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-semibold">
-                        Komplain Terbaru
-                      </h3>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {recentComplaints.map((complaint) => (
-                        <div
-                          key={complaint.id}
-                          className="py-3 border-b last:border-b-0 flex items-center hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-200"
-                        >
-                          <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-                            {complaint.senderAvatar ? (
-                              <img
-                                src={complaint.senderAvatar}
-                                alt={complaint.sender}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-600 text-lg">
-                                {complaint.sender.charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <div className="ml-3 flex-grow">
-                            <p className="text-sm font-medium text-gray-800">
-                              {complaint.sender} Baru Saja Complaint
-                            </p>
-                            <p className="text-xs text-gray-500 truncate max-w-48">
-                              {complaint.title}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {recentComplaints.length > 0 && (
-                      <div className="mt-3 text-center">
-                        <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                          Lihat Semua Komplain
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Section */}
-            <div className="relative" ref={profileRef}>
-              <div
-                className="flex items-center space-x-2 cursor-pointer"
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              >
-                <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium">Halo ! Adam</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
-                </div>
-                <ChevronRight
-                  size={20}
-                  className={`transition-transform duration-300 ${
-                    showProfileDropdown ? "rotate-90" : ""
-                  }`}
-                />
+            {/* Content Container */}
+            <div className="p-4">
+              {/* Header with Title and Menu */}
+              <div className="flex justify-between items-start mb-4">
+                {/* Title Skeleton */}
+                <div className="h-7 bg-gray-200 rounded w-4/5 animate-pulse"></div>
+                {/* Menu Button Skeleton */}
+                <div className="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
               </div>
 
-              {showProfileDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-                w-[calc(50%-2rem)] md:w-48 
-                bg-white border-none rounded-lg shadow-2xl 
-                z-50
-                md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-                md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-                md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="py-1 bg-white rounded-lg shadow-lg">
-                    <button
-                      onClick={handleProfileClick}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2"
-                    >
-                      <Edit className="h-5 w-5 text-gray-500" />
-                      <span>Edit Profil</span>
-                    </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2">
-                      <LogOut className="h-5 w-5 text-red-600" />
-                      <span>Log Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Category and Date Row */}
+              <div className="flex items-center gap-3 mb-4">
+                {/* Category Badge Skeleton */}
+                <div className="h-8 w-24 bg-gray-200 rounded-full animate-pulse"></div>
+                {/* Date Skeleton */}
+                <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+
+              {/* Description Skeleton */}
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/5 animate-pulse"></div>
+              </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
-    </header>
+    </div>
   );
 };
 
@@ -1237,9 +1020,7 @@ const PublicNews = () => {
       )}
       {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-        </div>
+        <PublicServiceSkeleton />
       ) : (
         <>
           {renderNewsTable()}

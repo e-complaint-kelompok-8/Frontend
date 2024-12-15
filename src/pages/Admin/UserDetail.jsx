@@ -360,7 +360,7 @@ const Detail = () => {
   }, [id]);
 
   const renderComplaintIcon = (category) => {
-    switch (category) {
+    switch (category.name) {
       case "Kesehatan":
         return <Hospital size={20} className="text-blue-500" />;
       case "Infrastruktur":
@@ -376,6 +376,13 @@ const Detail = () => {
       default:
         return <AlertCircle size={20} className="text-gray-500" />;
     }
+  };
+
+  const gridColumnClasses = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    3: "grid-cols-3",
+    4: "grid-cols-4",
   };
 
   const getStatusColor = (status) => {
@@ -419,6 +426,7 @@ const Detail = () => {
   }
 
   const totalComplaints = user.complaints ? user.complaints.length : 0;
+
   const complaintStatusCount = user.complaints
     ? user.complaints.reduce((acc, complaint) => {
         acc[complaint.status] = (acc[complaint.status] || 0) + 1;
@@ -487,7 +495,11 @@ const Detail = () => {
           </div>
         </div>
         {/* Bagian Status */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div
+          className={`grid ${
+            gridColumnClasses[Object.keys(complaintStatusCount).length]
+          } gap-4 mt-4`}
+        >
           {Object.entries(complaintStatusCount).map(([status, count]) => (
             <div
               key={status}
