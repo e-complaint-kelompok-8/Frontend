@@ -186,7 +186,36 @@ const HistoryPengaduan = () => {
               </div>
             </>
           ) : (
-            !loading && <p className="text-center">Tidak ada data tersedia.</p>
+            !loading && (
+              <div className="flex flex-col items-center justify-center text-center py-10">
+                {/* Icon Ilustrasi */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-16 w-16 text-gray-400 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 17v2a2 2 0 002 2h2a2 2 0 002-2v-2m-3-3a4 4 0 100-8 4 4 0 000 8zm7-4h.01M4 12h.01"
+                  />
+                </svg>
+                {/* Pesan */}
+                <p className="text-gray-600 text-lg font-medium">
+                  Tidak ada data tersedia.
+                </p>
+                {/* Tombol Opsional */}
+                <button
+                  onClick={() => window.location.reload()} // Fungsi opsional untuk reload
+                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition"
+                >
+                  Muat Ulang
+                </button>
+              </div>
+            )
           )}
         </div>
       </main>
