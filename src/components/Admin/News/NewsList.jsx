@@ -9,20 +9,22 @@ import NewsCard from "./NewsCard";
 import NewsModal from "./NewsModal";
 import PublicServiceSkeleton from "./PublicServiceSkeleton";
 
+import { usePagination } from "@hooks/Admin/usePagination";
+
 const NewsList = () => {
   const [categories, setCategories] = useState([]);
   const [newsData, setNewsData] = useState([]);
   const [selectedNews, setSelectedNews] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingAction, setLoadingAction] = useState(false); // New state for action loading
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedNewsItem, setSelectedNewsItem] = useState(null);
 
   const limit = 10;
+  const { currentPage, handlePageChange } = usePagination();
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -88,7 +90,7 @@ const NewsList = () => {
       });
 
       if (result.isConfirmed) {
-        setLoadingAction(true); // Start loading
+        setLoadingAction(true);
         await NewsService.deleteNews(selectedNews);
         Swal.fire({
           icon: "success",
@@ -109,7 +111,7 @@ const NewsList = () => {
         text: error.message || "Gagal menghapus berita",
       });
     } finally {
-      setLoadingAction(false); // End loading
+      setLoadingAction(false);
     }
   };
 
@@ -127,7 +129,7 @@ const NewsList = () => {
       });
 
       if (result.isConfirmed) {
-        setLoadingAction(true); // Start loading
+        setLoadingAction(true);
         await NewsService.deleteNews([newsId]);
         Swal.fire({
           icon: "success",
@@ -147,7 +149,7 @@ const NewsList = () => {
         text: error.message || "Gagal menghapus berita",
       });
     } finally {
-      setLoadingAction(false); // End loading
+      setLoadingAction(false);
     }
   };
 
@@ -179,7 +181,7 @@ const NewsList = () => {
           </button>
         </div>
       )}
-      {loading || loadingAction ? ( // Show skeleton if loading or action is in progress
+      {loading || loadingAction ? (
         <PublicServiceSkeleton />
       ) : (
         <>
@@ -204,13 +206,73 @@ const NewsList = () => {
           </div>
         </>
       )}
+      {!loading && newsData.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mt-6 pb-16 md:pb-8">
+          <button
+            onClick={() => handlePageChange(currentPage - 1, totalPages)}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 text-sm ${
+              currentPage === 1
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            « Previous
+          </button>
+
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            if (
+              pageNumber === 1 ||
+              pageNumber === totalPages ||
+              (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+            ) {
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber, totalPages)}
+                  className={`px-3 py-1 rounded ${
+                    pageNumber === currentPage
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            } else if (
+              pageNumber === currentPage - 2 ||
+              pageNumber === currentPage + 2
+            ) {
+              return (
+                <span key={pageNumber} className="px-2">
+                  ...
+                </span>
+              );
+            }
+            return null;
+          })}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1, totalPages)}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 text-sm ${
+              currentPage === totalPages
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Next »
+          </button>
+        </div>
+      )}
       {isAddModalOpen && (
         <NewsModal
           isOpen={isAddModalOpen}
           setIsOpen={setIsAddModalOpen}
           categories={categories}
           fetchNews={fetchNews}
-          setLoadingAction={setLoadingAction} // Pass loadingAction state
+          setLoadingAction={setLoadingAction}
         />
       )}
       {isUpdateModalOpen && (
@@ -220,7 +282,7 @@ const NewsList = () => {
           categories={categories}
           fetchNews={fetchNews}
           newsItem={selectedNewsItem}
-          setLoadingAction={setLoadingAction} // Pass loadingAction state
+          setLoadingAction={setLoadingAction}
         />
       )}
     </div>
