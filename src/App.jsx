@@ -27,8 +27,6 @@ function App() {
         <Route path="/admin-register" element={<RegisterPageAdmin />} />
 
         <Route path="/user/*" element={<UserRoutes />} />
-        <Route path="/admin/*" element={<AdminRoutes />} />
-        <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
       </Routes>
     </Router>
   );
