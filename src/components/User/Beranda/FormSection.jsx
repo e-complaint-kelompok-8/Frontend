@@ -5,8 +5,10 @@ import { fetchUserProfile } from "@services/profileService";
 import { useComplaintStore } from "@stores/useComplaintStore";
 import { uploadToCloudinary } from "@utils/cloudinary";
 import Swal from "sweetalert2"; // Import SweetAlert2
+import { useNavigate } from "react-router-dom";
 
 export default function FormSection() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     kategori: "",
     judul: "",
@@ -183,15 +185,14 @@ export default function FormSection() {
           onClick={() => setShowSuccessPopup(false)}
         >
           <div
-            className="bg-white rounded-lg shadow-md w-full max-w-[1440px] p-6 text-center"
+            className="bg-white rounded-lg shadow-md p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-6">
               <div className="space-y-2">
                 <h1 className="text-xl font-semibold tracking-tight">
-                  Nomer Pengaduan Anda {complaintNumber}
+                  Laporan anda berhasil dikirim!
                 </h1>
-                <p className="text-gray-500">Laporan anda telah dikirim!</p>
               </div>
 
               <div className="flex justify-center">
@@ -213,7 +214,10 @@ export default function FormSection() {
                 </div>
               </div>
 
-              <button className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded w-full">
+              <button
+                onClick={() => navigate(`/user/status-pengaduan`)}
+                className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded w-full"
+              >
                 LIHAT STATUS PENGADUAN
               </button>
             </div>
