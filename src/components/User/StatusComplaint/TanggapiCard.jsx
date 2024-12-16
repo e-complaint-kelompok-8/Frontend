@@ -5,6 +5,7 @@ import {
   sendFeedbackResponse,
   fetchFeedbackComplaintByComplaintId,
 } from "@services/complaintService";
+import Swal from "sweetalert2";
 
 const TanggapiCard = ({ complaint }) => {
   const [showReplyInput, setShowReplyInput] = useState(false);
@@ -32,7 +33,15 @@ const TanggapiCard = ({ complaint }) => {
       const result = await sendFeedbackResponse(feedbackId, responseContent);
       setSentFeedback(result.data);
       setResponseContent("");
-      alert("Balasan berhasil dikirim!");
+      // SweetAlert2 success message with page refresh
+      Swal.fire({
+        icon: "success",
+        title: "Laporan Anda Telah Selesai!",
+        text: "Terima kasih atas partisipasi anda.",
+        confirmButtonText: "OK",
+      }).then(() => {
+        window.location.reload(); // This will refresh the page
+      });
     } catch (error) {
       console.error("Error while sending response:", error);
       alert("Terjadi kesalahan saat mengirim balasan.");
@@ -52,7 +61,15 @@ const TanggapiCard = ({ complaint }) => {
 
       // Kirim respons kosong
       await sendFeedbackResponse(feedbackId, "");
-      alert("Laporan berhasil ditandai sebagai selesai.");
+      // SweetAlert2 success message with page refresh
+      Swal.fire({
+        icon: "success",
+        title: "Laporan Anda Telah Selesai!",
+        text: "Terima kasih atas partisipasi anda.",
+        confirmButtonText: "OK",
+      }).then(() => {
+        window.location.reload(); // This will refresh the page
+      });
     } catch (error) {
       console.error("Error while completing the report:", error);
       alert("Terjadi kesalahan saat menyelesaikan laporan.");
