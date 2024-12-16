@@ -1,18 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Cat,
-  ChevronRight,
-  Paperclip,
-  Send,
-  MessageCircle,
-} from "lucide-react";
-import ReactMarkdown from "react-markdown"; // Tambahkan react-markdown
-import {
-  fetchChatbotResponse,
-  fetchUserChatbotResponses,
-} from "@services/chatBotService"; // Pastikan import fungsi API
+import React, { useState } from "react";
+import { Cat, ChevronRight, Send, MessageCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { fetchChatbotResponse } from "@services/chatBotService";
 
 const LapiChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,18 +19,25 @@ const LapiChatbot = () => {
   ];
 
   // Toggle chat window
-  const toggleChat = () => setIsOpen(!isOpen);
+  const toggleChat = () => {
+    setIsOpen((prev) => {
+      if (!prev) {
+        // Reset messages setiap kali chat dibuka
+        setMessages([]);
+      }
+      return !prev;
+    });
+  };
 
   // Handle parsing & formatting bot response
   const formatResponse = (text) => {
     try {
-      // Parse jika terdapat karakter escape
       return JSON.parse(text);
     } catch {
       return text
-        .replace(/\\n/g, "\n") // Ganti "\n" dengan newline
-        .replace(/\\"/g, '"') // Ganti \" dengan "
-        .replace(/\\\\/g, "\\"); // Ganti "\\" dengan "\"
+        .replace(/\\n/g, "\n")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\");
     }
   };
 
@@ -49,11 +47,11 @@ const LapiChatbot = () => {
 
     const userMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
-    setInput(""); // Reset input
+    setInput("");
 
     try {
       setLoading(true);
-      const response = await fetchChatbotResponse(input); // Panggil API chatbot
+      const response = await fetchChatbotResponse(input);
       const botMessage = {
         sender: "bot",
         text: formatResponse(
@@ -71,37 +69,15 @@ const LapiChatbot = () => {
     }
   };
 
-  // Handle menu option click
   const handleMenuOption = async (option) => {
     setInput(option.text);
     await handleSendMessage();
   };
 
-  // Fetch previous conversations (if any)
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const data = await fetchUserChatbotResponses(1, 10); // Ambil 10 percakapan terakhir
-        const historyMessages = data.data
-          .map((entry) => [
-            { sender: "user", text: entry.request },
-            { sender: "bot", text: formatResponse(entry.response) },
-          ])
-          .flat();
-        setMessages(historyMessages);
-      } catch (error) {
-        console.error("Failed to fetch conversation history:", error);
-      }
-    };
-
-    if (isOpen) fetchHistory();
-  }, [isOpen]);
-
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-[600px] bg-white rounded-xl shadow-xl overflow-hidden">
-          {/* Header */}
           <div className="bg-[#4338ca] text-white p-4 flex items-center gap-3 rounded-xl border-white border-4 shadow-lg">
             <div className="bg-white p-1.5 rounded-full">
               <Cat className="w-6 h-6 text-[#4338ca]" />
@@ -112,16 +88,7 @@ const LapiChatbot = () => {
             </div>
           </div>
 
-          {/* Chat Content */}
           <div className="h-[500px] overflow-y-auto p-4 space-y-4">
-            {/* Today Label */}
-            {/* <div className="flex justify-center">
-              <span className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-sm">
-                Hari Ini
-              </span>
-            </div> */}
-
-            {/* Bot Welcome Message */}
             <div className="flex gap-3">
               <div className="bg-white h-10 p-2 rounded-full border">
                 <Cat className="w-6 h-6 text-[#4338ca]" />
@@ -135,7 +102,6 @@ const LapiChatbot = () => {
               </div>
             </div>
 
-            {/* Menu Options */}
             {!loading && !messages.length && (
               <div className="bg-gray-50 rounded-lg p-4 space-y-3 max-w-[80%] ml-14 shadow-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -159,7 +125,6 @@ const LapiChatbot = () => {
               </div>
             )}
 
-            {/* Messages */}
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -167,13 +132,11 @@ const LapiChatbot = () => {
                   message.sender === "user" ? "justify-end" : ""
                 }`}
               >
-                {/* Icon hanya untuk bot */}
                 {message.sender === "bot" && (
                   <div className="bg-white h-10 p-2 rounded-full border">
                     <Cat className="w-6 h-6 text-[#4338ca]" />
                   </div>
                 )}
-                {/* Pesan */}
                 <div
                   className={`${
                     message.sender === "user"
@@ -191,7 +154,6 @@ const LapiChatbot = () => {
             ))}
           </div>
 
-          {/* Input Area */}
           <div className="border-t p-4 bg-white">
             <div className="flex items-center gap-2">
               <input
@@ -213,7 +175,6 @@ const LapiChatbot = () => {
         </div>
       )}
 
-      {/* Toggle Button */}
       <button
         onClick={toggleChat}
         className="bg-[#4338ca] text-white rounded-full p-3 shadow-lg hover:bg-[#3730a3] transition-colors"
