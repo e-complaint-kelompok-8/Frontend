@@ -7,8 +7,8 @@ const ComplaintHistoryCarousel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slidesPerPage, setSlidesPerPage] = useState(2); // Default untuk ukuran layar besar
 
-  const slidesPerPage = 2; // Jumlah keluhan per slide
   const maxDescriptionLength = 100; // Panjang maksimal deskripsi
 
   // Fetch data pengaduan dari API
@@ -33,6 +33,26 @@ const ComplaintHistoryCarousel = () => {
     };
 
     loadComplaints();
+  }, []);
+
+  // Deteksi ukuran layar untuk menyesuaikan slidesPerPage
+  useEffect(() => {
+    const updateSlidesPerPage = () => {
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        setSlidesPerPage(1); // Untuk layar kecil (Android, iOS, dll.)
+      } else {
+        setSlidesPerPage(2); // Untuk layar sedang ke atas
+      }
+    };
+
+    // Pasang event listener
+    updateSlidesPerPage();
+    window.addEventListener("resize", updateSlidesPerPage);
+
+    // Bersihkan event listener saat komponen di-unmount
+    return () => {
+      window.removeEventListener("resize", updateSlidesPerPage);
+    };
   }, []);
 
   const getStatusColor = (status) => {
@@ -92,7 +112,9 @@ const ComplaintHistoryCarousel = () => {
           {Array.from({ length: totalSlides }).map((_, pageIndex) => (
             <div
               key={pageIndex}
-              className="flex w-full flex-shrink-0 gap-6 px-14"
+              className={`flex w-full flex-shrink-0 gap-6 ${
+                slidesPerPage === 1 ? "px-6" : "px-14"
+              }`}
             >
               {recentComplaints
                 .slice(
@@ -100,15 +122,12 @@ const ComplaintHistoryCarousel = () => {
                   pageIndex * slidesPerPage + slidesPerPage
                 )
                 .map((complaint) => (
-                  <div key={complaint.id} className="w-1/2 ">
+                  <div key={complaint.id} className="w-full md:w-1/2">
                     <div className="h-38 h-full overflow-hidden rounded-xl shadow-md bg-white p-6 transition-all duration-300 hover:shadow-lg">
                       <div className="flex justify-between items-center mb-4">
-                        {/* <div className="flex items-center"> */}
                         <h3 className="text-gray-700 text-lg font-semibold truncate">
                           {complaint.title}
                         </h3>
-
-                        {/* </div> */}
                         <span
                           className={`inline-block rounded-full px-3 py-1 text-sm ${getStatusColor(
                             complaint.status
