@@ -5,7 +5,6 @@ const AdminService = {
   getProfile: async () => {
     try {
       const response = await axiosInstance.get("/profile");
-      console.log("dari service", response);
       return response.data.admin;
     } catch (error) {
       console.error("Error fetching admin profile:", error);
