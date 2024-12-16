@@ -7,8 +7,8 @@ import Swal from "sweetalert2";
 import * as Yup from "yup";
 
 import useAuthStore from "@stores/useAuthStore";
-import NewsService from "@services/NewsService";
-import CategoryService from "@services/CategoryService";
+import NewsService from "@services/Admin/NewsService";
+import CategoryService from "@services/Admin/CategoryService";
 
 import Sidebar from "@components/Admin/Sidebar";
 import Header from "@components/Admin/Header";

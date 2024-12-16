@@ -1,333 +1,116 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  MessageSquare,
-  PieChart,
   Search,
-  Users,
   User,
   X,
   Plus,
   Pencil,
   Trash2,
   Mail,
-  Edit,
   Phone,
-  ChevronRight,
 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
-import { useLocation, Link, useNavigate } from "react-router-dom";
-import UserService from "@services/UserService";
+import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ className, onClose }) => {
-  const location = useLocation();
+import UserService from "@services/Admin/UserService";
 
-  const isActivePath = (path) => {
-    switch (path) {
-      case "/admin/complaints":
-        return location.pathname.startsWith("/admin/complaint");
-      case "/admin/public-services":
-        return location.pathname.startsWith("/admin/news");
-      default:
-        return location.pathname === path;
-    }
-  };
+import Sidebar from "@components/Admin/Sidebar";
+import Header from "@components/Admin/Header";
+import BottomNavigation from "@components/Admin/BottomNavigation";
 
-  return (
-    <div
-      className={`bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-500 text-white p-4 md:p-6 space-y-6 h-full flex flex-col ${className} transition-colors duration-300`}
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-2xl font-bold">Laporin</h1>
-        {onClose && (
-          <button onClick={onClose} className="md:hidden">
-            <X size={24} />
-          </button>
-        )}
-      </div>
-      <nav className="space-y-4 flex-grow">
-        {[
-          { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-          {
-            icon: MessageSquare,
-            label: "Complaint",
-            path: "/admin/complaints",
-          },
-          {
-            icon: Users,
-            label: "Public Services",
-            path: "/admin/public-services",
-          },
-          { icon: Users, label: "Users", path: "/admin/users" },
-        ].map(({ icon: Icon, label, path }) => (
-          <Link
-            key={label}
-            to={path}
-            className={`flex items-center space-x-2 py-2 px-2 rounded-lg transition-colors duration-300 ${
-              isActivePath(path)
-                ? "bg-white text-indigo-700"
-                : "text-white hover:bg-indigo-500/95 hover:text-white"
-            }`}
-          >
-            <Icon size={20} />
-            <span className="text-sm md:text-base">{label}</span>
-          </Link>
-        ))}
-      </nav>
-      <div>
-        <a
-          href="#"
-          className="flex items-center space-x-2 text-white hover:bg-indigo-500/70 hover:text-white py-2 px-2 rounded-lg transition-colors duration-300"
-        >
-          <LogOut size={20} />
-          <span className="text-sm md:text-base">Log-Out</span>
-        </a>
-      </div>
-    </div>
-  );
-};
-
-const BottomNavigation = () => {
-  const location = useLocation();
-
-  const isActivePath = (path) => {
-    switch (path) {
-      case "/admin/complaints":
-        return location.pathname.startsWith("/admin/complaint");
-      case "/admin/public-services":
-        return location.pathname.startsWith("/admin/news");
-      default:
-        return location.pathname === path;
-    }
-  };
-
-  const navItems = [
-    { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: MessageSquare, label: "Complaint", path: "/admin/complaints" },
-    { icon: Users, label: "Services", path: "/admin/public-services" },
-    { icon: User, label: "Users", path: "/admin/users" },
-  ];
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg md:block lg:hidden">
-      <div className="flex justify-around py-2">
-        {navItems.map(({ icon: Icon, label, path }) => (
-          <Link
-            key={label}
-            to={path}
-            className={`flex flex-col items-center py-1 px-2 rounded-lg ${
-              isActivePath(path)
-                ? "text-indigo-700"
-                : "text-gray-500 hover:text-indigo-700"
-            }`}
-          >
-            <Icon size={20} />
-            <span className="text-xs mt-1">{label}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const Header = () => {
-  const [showNotificationDropdown, setShowNotificationDropdown] =
-    useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const notificationRef = useRef(null);
-  const profileRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Mock data dengan nama pengirim
-  const recentComplaints = [
-    {
-      id: 1,
-      sender: "John Doe",
-      title: "Jalanan Bolong",
-      status: "Belum Ditangani",
-    },
-    {
-      id: 2,
-      sender: "Jane Smith",
-      title: "Macet Di Tol Cikupa",
-      status: "Belum Ditangani",
-    },
-    {
-      id: 3,
-      sender: "Alex Johnson",
-      title: "Keluhan Produk",
-      status: "Belum Ditangani",
-    },
-  ];
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target)
-      ) {
-        setShowNotificationDropdown(false);
-      }
-
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setShowProfileDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleProfileClick = () => {
-    navigate("/edit-profile");
-  };
-
-  return (
-    <header className="bg-white shadow-sm sticky top-0 z-40 ">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Search Section */}
-          <div className="flex items-center flex-1">
-            <div className={`flex items-center w-full max-w-md relative`}>
-              <Search className="absolute left-3 h-5 w-5 text-gray-400 pointer-events-none" />
-              <input
-                type="search"
-                placeholder="Cari Disini"
-                className="w-full pl-10 pr-4 py-2 mr-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+const UserTableSkeleton = () => {
+  const renderSkeletonCard = () => (
+    <div className="rounded-lg md:p-4 mb-4 bg-white shadow-md animate-pulse">
+      <div className="flex px-4 space-x-4">
+        <div className="flex flex-col space-y-2 flex-1 pb-4">
+          <div className="flex items-center justify-between mt-2">
+            <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
           </div>
 
-          {/* Notification and Profile Section */}
-          <div className="flex items-center space-x-4 ">
-            {/* Notification Dropdown */}
-            <div className="relative mt-2" ref={notificationRef}>
-              <button
-                className="relative"
-                onClick={() =>
-                  setShowNotificationDropdown(!showNotificationDropdown)
-                }
-              >
-                <Bell className="h-6 w-6 text-gray-400" />
-                {recentComplaints.length > 0 && (
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 transform translate-x-1/2 -translate-y-1/2"></span>
-                )}
-              </button>
-
-              {showNotificationDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-          w-[calc(100%-2rem)] md:w-96 
-          bg-white border-none rounded-lg shadow-2xl 
-          z-50
-          md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-          md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-          md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="p-4 bg-white rounded-lg shadow-lg">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-semibold">
-                        Komplain Terbaru
-                      </h3>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {recentComplaints.map((complaint) => (
-                        <div
-                          key={complaint.id}
-                          className="py-3 border-b last:border-b-0 flex items-center hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-200"
-                        >
-                          <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-                            {complaint.senderAvatar ? (
-                              <img
-                                src={complaint.senderAvatar}
-                                alt={complaint.sender}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-600 text-lg">
-                                {complaint.sender.charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <div className="ml-3 flex-grow">
-                            <p className="text-sm font-medium text-gray-800">
-                              {complaint.sender} Baru Saja Complaint
-                            </p>
-                            <p className="text-xs text-gray-500 truncate max-w-48">
-                              {complaint.title}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {recentComplaints.length > 0 && (
-                      <div className="mt-3 text-center">
-                        <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                          Lihat Semua Komplain
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Section */}
-            <div className="relative" ref={profileRef}>
-              <div
-                className="flex items-center space-x-2 cursor-pointer"
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              >
-                <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium">Halo ! Adam</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
-                </div>
-                <ChevronRight
-                  size={20}
-                  className={`transition-transform duration-300 ${
-                    showProfileDropdown ? "rotate-90" : ""
-                  }`}
-                />
-              </div>
-
-              {showProfileDropdown && (
-                <div
-                  className="fixed md:absolute top-16 md:top-auto right-4 md:right-0 md:mt-4 
-                w-[calc(50%-2rem)] md:w-48 
-                bg-white border-none rounded-lg shadow-2xl 
-                z-50
-                md:before:content-[''] md:before:absolute md:before:border-l-8 md:before:border-r-8 md:before:border-b-8 
-                md:before:border-l-transparent md:before:border-r-transparent md:before:border-b-white 
-                md:before:-top-2 md:before:right-2 md:before:rotate-180 mt-1"
-                >
-                  <div className="py-1 bg-white rounded-lg shadow-lg">
-                    <button
-                      onClick={handleProfileClick}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2"
-                    >
-                      <Edit className="h-5 w-5 text-gray-500" />
-                      <span>Edit Profil</span>
-                    </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2">
-                      <LogOut className="h-5 w-5 text-red-600" />
-                      <span>Log Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="space-y-1">
+            <div className="h-4 bg-gray-200 rounded w-48"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
         </div>
       </div>
-    </header>
+    </div>
+  );
+
+  const renderSkeletonTableRow = () => (
+    <tr className="animate-pulse hover:bg-gray-50">
+      <td className="p-4">
+        <div className="h-5 w-5 bg-gray-200 rounded"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      </td>
+      <td className="p-4">
+        <div className="flex space-x-4">
+          <div className="h-5 w-5 bg-gray-200 rounded"></div>
+          <div className="h-5 w-5 bg-gray-200 rounded"></div>
+        </div>
+      </td>
+    </tr>
+  );
+
+  return (
+    <div className="md:max-w-6xl md:mx-auto ">
+      {/* Desktop Table Skeleton */}
+      <div className="md:bg-white md:shadow rounded-lg overflow-x-auto hidden sm:block">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="p-4 w-1/12">
+                <div className="h-5 w-5 bg-gray-200 rounded"></div>
+              </th>
+              <th className="p-4 text-left w-3/12">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </th>
+              <th className="p-4 text-left w-3/12">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </th>
+              <th className="p-4 text-left w-3/12">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </th>
+              <th className="p-4 text-left w-2/12">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {[...Array(10)].map((_, index) => renderSkeletonTableRow(index))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card Skeleton */}
+      <div className="sm:hidden">
+        {[...Array(10)].map((_, index) => renderSkeletonCard(index))}
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="flex items-center justify-center gap-2 mt-6 pb-16 md:pb-8 animate-pulse">
+        <div className="h-8 w-20 bg-gray-200 rounded"></div>
+        <div className="space-x-2">
+          {[...Array(5)].map((_, index) => (
+            <div
+              key={index}
+              className="inline-block h-8 w-8 bg-gray-200 rounded"
+            ></div>
+          ))}
+        </div>
+        <div className="h-8 w-20 bg-gray-200 rounded"></div>
+      </div>
+    </div>
   );
 };
 
@@ -796,7 +579,7 @@ const TableUser = () => {
   return (
     <div className="md:max-w-6xl md:mx-auto md:px-4">
       <div className="flex flex-row justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Daftar User</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Daftar User</h1>
         <button
           onClick={() => setIsAddModalOpen(true)}
           className="flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
@@ -821,9 +604,7 @@ const TableUser = () => {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-        </div>
+        <UserTableSkeleton />
       ) : (
         <>
           {renderUserTable()}
@@ -839,9 +620,6 @@ const TableUser = () => {
 };
 
 export default function UsersPage() {
-  const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   return (
     <div className="flex h-screen bg-gray-100 pb-16 md:pb-16 lg:pb-0">
       {/* Persistent Sidebar for Large Screens */}

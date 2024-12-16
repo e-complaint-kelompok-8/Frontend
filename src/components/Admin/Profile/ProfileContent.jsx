@@ -3,11 +3,64 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Mail, Camera, Eye, Lock, EyeOff, User } from "lucide-react";
 import Swal from "sweetalert2";
-import AdminService from "@services/AdminService";
-import useAuthStore from "@stores/useAuthStore";
+
+import AdminService from "@services/Admin/AdminService";
+import useAdminStore from "@stores/useAdminStore";
+
+const ProfileSkeleton = () => {
+  return (
+    <main className="flex-1 overflow-auto">
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex overflow-hidden justify-center items-center lg:mt-4 md:mt-4">
+          <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 animate-pulse">
+            <div className="space-y-4 text-center mb-6">
+              <div className="h-8 bg-gray-300 rounded w-3/4 mx-auto mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto"></div>
+            </div>
+
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center relative border-4 border-[#4338CA]/20">
+                  <User className="w-16 h-16 text-gray-400" />
+                  <button
+                    className="absolute bottom-0 right-0 bg-gray-300 text-white rounded-full p-2"
+                    disabled
+                  >
+                    <Camera size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center"></div>
+                  <div className="pl-10 w-full rounded-lg border border-gray-300 p-3 bg-gray-200"></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center"></div>
+                  <div className="pl-10 pr-10 w-full rounded-lg border border-gray-300 p-3 bg-gray-200"></div>
+                </div>
+              </div>
+
+              <div className="w-full rounded-lg p-3 bg-gray-300 h-12"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+};
 
 const ProfileContent = () => {
   const [profileImage, setProfileImage] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [initialValues, setInitialValues] = useState({
     email: "",
@@ -19,6 +72,7 @@ const ProfileContent = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true);
       try {
         const profile = await AdminService.getProfile();
         setProfileImage(profile.photo);
@@ -36,6 +90,8 @@ const ProfileContent = () => {
           title: "Error",
           text: "Gagal mengambil data profil",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -79,7 +135,12 @@ const ProfileContent = () => {
 
       const updatedProfile = await AdminService.updateProfile(updateData);
 
-      useAuthStore.getState().setEmail(updatedProfile.email);
+      // Update Zustand store with the fetched profile data
+      useAdminStore.getState().setProfileData({
+        email: updatedProfile.email,
+        role: updatedProfile.role,
+        photo: updatedProfile.photo || initialValues.photo_url,
+      });
 
       Swal.fire({
         icon: "success",
@@ -120,6 +181,10 @@ const ProfileContent = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <main className="flex-1 overflow-auto">

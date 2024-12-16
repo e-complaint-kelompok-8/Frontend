@@ -1,31 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  Menu,
-  MessageSquare,
-  PieChart,
-  Search,
-  Settings,
-  Users,
-  User,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Send,
-  Paperclip,
-  Smile,
-} from "lucide-react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { X, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import Swal from "sweetalert2";
-
-import ComplaintService from "@services/ComplaintService";
-import ChatbotService from "@services/ChatBot";
 import ReactMarkdown from "react-markdown";
+
+import ComplaintService from "@services/Admin/ComplaintService";
+import ChatbotService from "@services/Admin/ChatBot";
 
 import Header from "@components/Admin/Header";
 import Sidebar from "@components/Admin/Sidebar";

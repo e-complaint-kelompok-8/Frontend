@@ -13,8 +13,8 @@ import * as Yup from "yup";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-import NewsService from "@services/NewsService";
-import CategoryService from "@services/CategoryService";
+import NewsService from "@services/Admin/NewsService";
+import CategoryService from "@services/Admin/CategoryService";
 import useAuthStore from "@stores/useAuthStore";
 
 import Sidebar from "@components/Admin/Sidebar";
@@ -164,7 +164,6 @@ const PublicNews = () => {
     try {
       setLoading(true);
       const response = await NewsService.getAllNews(currentPage, limit);
-      console.log("API Response:", response);
 
       // Sesuaikan dengan struktur response dari API
       setNewsData(response.news || []); // Sesuaikan dengan response structure

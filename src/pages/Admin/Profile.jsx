@@ -2,7 +2,7 @@ import React from "react";
 import Sidebar from "@components/Admin/Sidebar";
 import Header from "@components/Admin/Header";
 import BottomNavigation from "@components/Admin/BottomNavigation";
-import ProfileContent from "@components/Admin/ProfileContent";
+import ProfileContent from "@components/Admin/Profile/ProfileContent";
 
 export default function Profile() {
   return (

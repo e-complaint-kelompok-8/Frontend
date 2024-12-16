@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-import DashboardContent from "@components/Admin/DashboardContent";
-import DashboardService from "@services/DashboardService";
+import DashboardContent from "@components/Admin/Dashboard/DashboardContent";
+import DashboardService from "@services/Admin/DashboardService";
 
 import Sidebar from "@components/Admin/Sidebar";
 import Header from "@components/Admin/Header";

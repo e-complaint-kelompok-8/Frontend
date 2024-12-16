@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PieChart,
   MessageSquare,
@@ -8,9 +8,12 @@ import {
   Newspaper,
   X,
 } from "lucide-react";
+import useAuthStore from "@stores/useAuthStore"; // Pastikan Anda mengimpor useAuthStore
 
 const Sidebar = ({ className, onClose, isLoading }) => {
   const location = useLocation();
+  const navigate = useNavigate(); // Untuk navigasi setelah logout
+  const clearAuth = useAuthStore((state) => state.clearAuth); // Ambil fungsi clearAuth dari store
 
   const navItems = [
     { icon: PieChart, label: "Dashboard", path: "/admin/dashboard" },
@@ -80,6 +83,12 @@ const Sidebar = ({ className, onClose, isLoading }) => {
     return <SidebarSkeleton />;
   }
 
+  // Logout handler
+  const handleLogout = () => {
+    clearAuth(); // Clear authentication data
+    navigate("/login"); // Redirect to login page (sesuaikan dengan route login Anda)
+  };
+
   // Regular sidebar rendering
   return (
     <div
@@ -110,13 +119,13 @@ const Sidebar = ({ className, onClose, isLoading }) => {
         ))}
       </nav>
       <div>
-        <a
-          href="#"
-          className="flex items-center space-x-2 text-white hover:bg-indigo-500/70 hover:text-white py-2 px-2 rounded-lg transition-colors duration-300 "
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-2 text-white hover:bg-indigo-500/70 hover:text-white py-2 px-2 rounded-lg transition-colors duration-300"
         >
           <LogOut size={20} />
           <span className="text-sm md:text-base">Log-Out</span>
-        </a>
+        </button>
       </div>
     </div>
   );

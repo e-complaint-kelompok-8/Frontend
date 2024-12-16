@@ -127,7 +127,7 @@ const StatusBadge = ({ status }) => {
 const RecentComplaint = ({ complaints }) => {
   const recentComplaints = [...complaints]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 10);
+    .slice(0, 6);
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all duration-300">

@@ -1,5 +1,5 @@
 import axiosInstance from "@config/axiosConfig";
-import CloudinaryService from "@services/CloudinaryService";
+import CloudinaryService from "@services/Admin/CloudinaryService";
 
 const NewsService = {
   // src/services/NewsService.js
