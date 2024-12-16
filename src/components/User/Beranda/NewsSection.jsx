@@ -71,7 +71,12 @@ const NewsSection = () => {
         )}
 
         <div className="mb-6 mt-8 flex items-center justify-end ">
-          <button className="text-sm text-primary">Lihat lainnya →</button>
+          <button
+            onClick={() => navigate(`/user/berita`)}
+            className="text-sm text-primary"
+          >
+            Lihat lainnya →
+          </button>
         </div>
       </section>
     </>
