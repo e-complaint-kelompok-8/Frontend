@@ -2,8 +2,6 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import UserRoutes from "@routes/UserRoutes";
-import AdminRoutes from "@routes/AdminRoutes";
-import SuperAdminRoutes from "@routes/SuperAdminRoutes";
 
 import LoginPage from "@pages/Auth/User/LoginPage";
 import RegisterPage from "@pages/Auth/User/RegisterPage";
