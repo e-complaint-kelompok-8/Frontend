@@ -105,8 +105,18 @@ const HistoryPengaduan = () => {
                       <Landmark size={40} />
                     </div>
                     <div className="w-10/12">
-                      <h3 className="font-semibold">Dari Tim Dukungan</h3>
-                      <p>{complaint.category.name}</p>
+                      {/* Baris header dengan "Dari Tim Dukungan" dan kategori */}
+                      <h3 className="font-semibold flex items-center gap-2">
+                        Dari Tim Dukungan
+                        <span className="text-gray-400 text-xs">•</span>{" "}
+                        {/* Pemisah dengan titik */}
+                        <span className="text-gray-400 text-xs">
+                          {complaint.category.name}
+                        </span>{" "}
+                        {/* Nama kategori */}
+                      </h3>
+
+                      {/* Pesan */}
                       <p className="text-gray-600 text-sm mt-1">
                         "Terima kasih telah melaporkan {complaint.title} melalui
                         pusat pengaduan. Kami ingin menginformasikan bahwa
