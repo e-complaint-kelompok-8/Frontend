@@ -15,7 +15,7 @@ const FooterUser = () => {
     <>
       <div className=" sm:max-w-full md:max-w-full lg:max-w-full">
         <Footer className="bg-slate-50 drop-shadow-2xl">
-          <div className="w-full">
+          <div className="w-full max-w-[1440px] mx-auto">
             <div className="grid w-full grid-cols-2 gap-8 md:px-24 md:pt-14 px-6 py-8 md:grid-cols-4">
               <div>
                 {/* <Footer.Title title="Company" className="text-white" /> */}
