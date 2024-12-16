@@ -102,6 +102,14 @@ const ProcedureSection = () => {
           </div>
         </div>
       </div>
+      <div className="w-full flex justify-end px-4">
+        <button
+          onClick={() => navigate(`/user/dashboard`)}
+          className="px-6 py-1 bg-primary hover:bg-blue-700 text-white rounded-lg text-lg font-medium"
+        >
+          LAPOR
+        </button>
+      </div>
     </div>
   );
 };

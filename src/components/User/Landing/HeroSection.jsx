@@ -1,6 +1,8 @@
 import React from "react";
 import bgHero from "@assets/User/bg-hero.jpg";
 import { useNavigate } from "react-router-dom";
+import greenCircle from "@assets/User/green-circle.svg";
+import greenDot from "@assets/User/green-dot.svg";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -15,6 +17,11 @@ const HeroSection = () => {
             alt="Background"
             className="max-h-screen max-w-full bg-no-repeat bg-cover bg-center"
           />
+          <img
+            src={greenDot}
+            alt="Dotted Design"
+            className="absolute -bottom-14 left-0 w-24 md:w-32 h-auto z-0"
+          />
           <div className="absolute w-full h-screen inset-0 bg-black opacity-50"></div>
         </div>
 
@@ -24,6 +31,11 @@ const HeroSection = () => {
             <h1 className="text-2xl text-black font-bold md:text-5xl">
               Berani Lapor! Tingkatkan Kualitas Layanan Publik Bersama
             </h1>
+            <img
+              src={greenCircle}
+              alt="Dotted Design"
+              className="absolute bottom-2 right-0 w-24 md:w-32 h-auto z-0"
+            />
             <p className="mt-4 md:text-lg font-normal text-gray-600">
               Sampaikan pengalaman dan masukan Anda untuk menciptakan layanan
               publik yang lebih cepat, aman, dan memuaskan. Mari bersama

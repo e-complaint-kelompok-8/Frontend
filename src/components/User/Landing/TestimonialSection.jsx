@@ -1,4 +1,5 @@
 import React from "react";
+import greenDot from "@assets/User/green-dot.svg";
 
 const TestimonialSection = () => {
   const testimonials = [
@@ -54,6 +55,11 @@ const TestimonialSection = () => {
           </div>
         ))}
       </div>
+      <img
+        src={greenDot}
+        alt="Dotted Design"
+        className="absolute end-0 left-0 w-24 md:w-32 h-auto z-0"
+      />
     </div>
   );
 };
