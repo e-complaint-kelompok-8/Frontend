@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, FileUp, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFetchCategories } from "@hooks/Admin/useFetchCategories";
@@ -22,6 +22,7 @@ const ComplaintList = () => {
     complaints,
     loading: complaintsLoading,
     totalPages,
+    refetch: refetchComplaints, 
   } = useFetchComplaints(selectedCategory, selectedStatus, currentPage);
 
   const getStatusColor = (status) => {
@@ -76,6 +77,7 @@ const ComplaintList = () => {
         showConfirmButton: false,
       });
       setSelectedComplaints([]);
+      refetchComplaints(); // Panggil refetch untuk memuat ulang data
     } catch (error) {
       console.error("Error deleting complaints:", error);
       Swal.fire({

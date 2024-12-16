@@ -14,7 +14,7 @@ export default function OTPVerificationPage() {
 
   // Get email and phone number from navigation state
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phone_number, setPhoneNumber] = useState("");
 
   useEffect(() => {
     const storedEmail = useAuthStore.getState().email;
@@ -132,7 +132,6 @@ export default function OTPVerificationPage() {
       // Prepare OTP verification data
       const otpData = {
         email,
-        phoneNumber,
         otp: values.otp,
       };
 
@@ -151,13 +150,14 @@ export default function OTPVerificationPage() {
       });
 
       // Clear the email from global state
-      useAuthStore.getState().clearEmail();
+      // useAuthStore.getState().clearEmail();
 
       // Navigate to login or dashboard
       navigate("/login");
     } catch (error) {
       // Close loading
       Swal.close();
+      console.log("ini error", error);
 
       // Show error message
       Swal.fire({
