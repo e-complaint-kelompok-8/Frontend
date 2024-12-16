@@ -11,8 +11,11 @@ export default function Profile() {
 
       <div className="flex-1 flex flex-col lg:ml-64">
         <Header />
-
-        <ProfileContent />
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+            <ProfileContent />
+          </div>
+        </main>
 
         <BottomNavigation />
       </div>

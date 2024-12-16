@@ -5,8 +5,8 @@ import { useFetchCategories } from "@hooks/Admin/useFetchCategories";
 import { useFetchComplaints } from "@hooks/Admin/useFetchComplaints";
 import { usePagination } from "@hooks/Admin/usePagination";
 
-import ComplaintListSkeleton from "@components/Admin/Complaint/ComplaintListSkeleton";
-import EmptyDataState from "@components/Admin/Complaint/EmptyDataState";
+import ComplaintListSkeleton from "./ComplaintListSkeleton";
+import EmptyDataState from "./EmptyDataState";
 
 import Swal from "sweetalert2";
 import ComplaintService from "@services/Admin/ComplaintService";

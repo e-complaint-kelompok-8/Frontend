@@ -1,117 +1,29 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import React, { useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import Swal from "sweetalert2";
 import * as Yup from "yup";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 import useAuthStore from "@stores/useAuthStore";
 import NewsService from "@services/Admin/NewsService";
-import CategoryService from "@services/Admin/CategoryService";
+import { useFetchCategories } from "@hooks/useFetchCategories";
+import { useFetchNewsDetail } from "@hooks/useFetchNewsDetail";
+import { useFetchComments } from "@hooks/useFetchComments";
+import NewsSkeleton from "./NewsSkeleton";
 
-import Sidebar from "@components/Admin/Sidebar";
-import Header from "@components/Admin/Header";
-import BottomNavigation from "@components/Admin/BottomNavigation";
-
-const NewsSkeleton = () => {
-  return (
-    <div className="min-h-screen lg:px-4 md:p-0">
-      {/* Back Button Skeleton */}
-
-      {/* Main Content */}
-      <div className="space-y-6 animate-pulse">
-        {/* Image and Basic Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Image Skeleton */}
-          <div className="w-full h-48 sm:h-56 md:h-64 lg:h-72 bg-gray-200 rounded-md"></div>
-
-          {/* Form Fields - Desktop */}
-          <div className="hidden md:grid grid-cols-1 gap-4">
-            {/* Title Field */}
-            <div className="space-y-2">
-              <div className="w-16 h-5 bg-gray-200 rounded"></div>
-              <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-            </div>
-
-            {/* Category Field */}
-            <div className="space-y-2">
-              <div className="w-20 h-5 bg-gray-200 rounded"></div>
-              <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-            </div>
-
-            {/* Date Field */}
-            <div className="space-y-2">
-              <div className="w-20 h-5 bg-gray-200 rounded"></div>
-              <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Fields - Mobile */}
-        <div className="md:hidden space-y-4">
-          {/* Title Field */}
-          <div className="space-y-2">
-            <div className="w-16 h-4 bg-gray-200 rounded"></div>
-            <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-          </div>
-
-          {/* Category Field */}
-          <div className="space-y-2">
-            <div className="w-20 h-4 bg-gray-200 rounded"></div>
-            <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-          </div>
-
-          {/* Date Field */}
-          <div className="space-y-2">
-            <div className="w-20 h-4 bg-gray-200 rounded"></div>
-            <div className="w-full h-10 bg-gray-200 rounded-lg"></div>
-          </div>
-        </div>
-
-        {/* Content Field */}
-        <div className="space-y-2">
-          <div className="w-16 h-5 bg-gray-200 rounded"></div>
-          <div className="w-full h-32 bg-gray-200 rounded-lg"></div>
-        </div>
-
-        {/* Update Button */}
-        <div className="flex justify-end">
-          <div className="w-32 h-10 bg-gray-200 rounded-lg"></div>
-        </div>
-
-        {/* Comments Section */}
-        <div className="mt-6 p-4 bg-white rounded-md">
-          <div className="flex justify-between items-center">
-            <div className="w-24 h-6 bg-gray-200 rounded"></div>
-            <div className="w-6 h-6 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const News = () => {
+const NewsDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [categories, setCategories] = useState([]);
-  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
-  const [newsImage, setNewsImage] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const categories = useFetchCategories();
+  const { newsData, loading } = useFetchNewsDetail(id);
+  const comments = useFetchComments(id);
 
-  const [comments, setComments] = useState([]);
+  const [newsImage, setNewsImage] = useState(newsData.photo_url);
   const [selectedComments, setSelectedComments] = useState([]);
-
-  const [newsData, setNewsData] = useState({
-    title: "",
-    content: "",
-    category: "",
-    date: "",
-    photo_url: "",
-  });
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
 
   const NewsSchema = Yup.object().shape({
     title: Yup.string()
@@ -124,72 +36,6 @@ const News = () => {
       .required("Konten wajib diisi"),
   });
 
-  const fetchNewsDetail = async () => {
-    try {
-      setLoading(true);
-      const response = await NewsService.getNewsDetail(id);
-      const news = response.news;
-
-      setNewsData({
-        title: news.title,
-        content: news.content,
-        category: news.category?.id?.toString() || news.category_id?.toString(),
-        date: news.date ? new Date(news.date).toISOString().split("T")[0] : "",
-        photo_url: news.photo_url,
-      });
-
-      setNewsImage(news.photo_url);
-    } catch (error) {
-      console.error("Error fetching news detail:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Gagal mengambil detail berita",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await CategoryService.getCategories();
-        setCategories(response || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Gagal mengambil data kategori",
-        });
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (id) {
-      fetchNewsDetail();
-      fetchComments(); // Fetch comments when the component mounts
-    }
-  }, [id]);
-
-  const fetchComments = async () => {
-    try {
-      const response = await NewsService.getCommentsByIdNews(id);
-      setComments(response.comments || []);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Gagal mengambil komentar",
-      });
-    }
-  };
-
   const handleDeleteComments = async () => {
     try {
       await NewsService.deleteComments(selectedComments);
@@ -201,7 +47,6 @@ const News = () => {
         showConfirmButton: false,
       });
       setSelectedComments([]);
-      fetchComments(); // Refresh comments after deletion
     } catch (error) {
       console.error("Error deleting comments:", error);
       Swal.fire({
@@ -217,19 +62,6 @@ const News = () => {
       setSelectedComments([]);
     } else {
       setSelectedComments(comments.map((comment) => comment.id));
-    }
-  };
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setNewsImage(file); // Simpan file langsung, bukan URL
-      // Preview image
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setNewsImage(e.target.result); // Untuk preview saja
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -259,10 +91,8 @@ const News = () => {
             enableReinitialize
             onSubmit={async (values, { setSubmitting, resetForm }) => {
               try {
-                console.log("Update values:", values);
                 setSubmitting(true);
 
-                // Ambil admin_id dari token yang disimpan di Zustand
                 const adminId = useAuthStore.getState().getAdminIdFromToken();
 
                 if (!adminId) {
@@ -275,16 +105,14 @@ const News = () => {
                   content: values.content,
                   category_id: parseInt(values.category),
                   date: values.date,
-                  photo_url: newsData.photo_url, // Gunakan photo_url dari newsData
+                  photo_url: newsData.photo_url,
                 };
 
-                // Jika ada file gambar baru
                 if (values.newsImage instanceof File) {
-                  updateData.new_image = values.newsImage; // Gunakan key berbeda untuk image baru
-                  updateData.old_photo_url = newsData.photo_url; // Kirim URL foto lama untuk dihapus
+                  updateData.new_image = values.newsImage;
+                  updateData.old_photo_url = newsData.photo_url;
                 }
 
-                console.log("Update data:", updateData);
                 await NewsService.updateNews(id, updateData);
 
                 Swal.fire({
@@ -297,7 +125,6 @@ const News = () => {
 
                 setNewsImage(null);
                 resetForm();
-                fetchNewsDetail(); // Refresh data setelah update
               } catch (error) {
                 console.error("Error updating news:", error);
                 Swal.fire({
@@ -338,14 +165,12 @@ const News = () => {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          // Preview image
                           const reader = new FileReader();
                           reader.onload = (e) => {
-                            setNewsImage(e.target.result); // Untuk preview
+                            setNewsImage(e.target.result);
                           };
                           reader.readAsDataURL(file);
-                          // Simpan file ke form values
-                          setFieldValue("newsImage", file); // Gunakan newsImage sebagai key
+                          setFieldValue("newsImage", file);
                         }
                       }}
                     />
@@ -551,26 +376,4 @@ const News = () => {
   );
 };
 
-export default function PublicServicesDetail() {
-  const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  return (
-    <div className="flex h-screen bg-gray-100 pb-16 md:pb-16 lg:pb-0">
-      {/* Persistent Sidebar for Large Screens */}
-      <Sidebar className="hidden lg:block w-64 fixed h-full" />
-
-      <div className="flex-1 flex flex-col lg:ml-64">
-        <Header />
-
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
-            <News />
-          </div>
-        </main>
-
-        <BottomNavigation />
-      </div>
-    </div>
-  );
-}
+export default NewsDetail;
