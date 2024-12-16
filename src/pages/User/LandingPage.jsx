@@ -1,12 +1,24 @@
 import React from "react";
-import useAuthStore from "@stores/useAuthStore";
-import { jwtDecode } from "jwt-decode";
+import NavigationBar from "@components/Shared/NavigationBar";
+import HeroSection from "@components/User/Landing/HeroSection";
+import AboutSection from "@components/User/Landing/AboutSection";
+import BenefitSection from "@components/User/Landing/BenefitSection";
+import ProcedureSection from "@components/User/Landing/ProcedureSection";
+import TestimonialSection from "@components/User/Landing/TestimonialSection";
+import FooterBar from "@components/Shared/FooterBar";
 
-export default function LandingPage() {
-  const { token, getUserIdFromToken } = useAuthStore();
-  console.log(getUserIdFromToken());
+const LandingPage = () => {
+  return (
+    <>
+      <NavigationBar />
+      <HeroSection />
+      <AboutSection />
+      <BenefitSection />
+      <ProcedureSection />
+      <TestimonialSection />
+      <FooterBar />
+    </>
+  );
+};
 
-  // getUserById(getUserIdFromToken)
-
-  return <div>Landing User</div>;
-}
+export default LandingPage;

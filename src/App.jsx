@@ -1,11 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// import UserRoutes from "@routes/UserRoutes";
-import AdminRoutes from "@routes/AdminRoutes";
-import SuperAdminRoutes from "@routes/SuperAdminRoutes";
-
-// import HomePage from "@pages/HomePage";
+import UserRoutes from "@routes/UserRoutes";
 
 import LoginPage from "@pages/Auth/User/LoginPage";
 import RegisterPage from "@pages/Auth/User/RegisterPage";
@@ -13,14 +9,13 @@ import OTPVerificationPage from "@pages/Auth/User/OTPVerificationPage";
 
 import LoginPageAdmin from "@pages/Auth/Admin/LoginPageAdmin";
 import RegisterPageAdmin from "@pages/Auth/Admin/RegisterPageAdmin";
-
-// import NotFound from "@components/Shared/NotFound";
+import LandingPage from "@pages/User/LandingPage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={<HomePage />} /> */}
+        <Route path="/" element={<LandingPage />} />
 
         {/* Users */}
         <Route path="/login" element={<LoginPage />} />
@@ -31,11 +26,7 @@ function App() {
         <Route path="/admin-login" element={<LoginPageAdmin />} />
         <Route path="/admin-register" element={<RegisterPageAdmin />} />
 
-        {/* <Route path="/user/*" element={<UserRoutes />} /> */}
-        <Route path="/admin/*" element={<AdminRoutes />} />
-        <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
-
-        {/* <Route path="*" element={<NotFound />} /> */}
+        <Route path="/user/*" element={<UserRoutes />} />
       </Routes>
     </Router>
   );
